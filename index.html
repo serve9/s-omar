@@ -892,30 +892,50 @@
         }
 
         // ==========================================
-        // GENERACIÓN Y DESCARGA DE PDF DIRECTA
-        // ==========================================
-        function descargarPDF(tipo, formato) {
-            const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
-            if (dataToPrint.length === 0) return alert("⚠️ No hay datos para convertir a PDF.");
+// GENERACIÓN Y DESCARGA DE PDF DIRECTA (CORREGIDA)
+// ==========================================
+function descargarPDF(tipo, formato) {
+    const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
+    if (dataToPrint.length === 0) return alert("⚠️ No hay datos para convertir a PDF.");
 
-            const htmlContent = generarHTMLReporte(tipo, formato);
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
+    const htmlContent = generarHTMLReporte(tipo, formato);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
 
-            // Asegurar estilos para el PDF
-            tempDiv.style.color = 'black';
-            tempDiv.style.background = 'white';
-            tempDiv.style.padding = formato === 'ticket80' ? '5mm' : '15mm';
-            tempDiv.style.fontFamily = formato === 'ticket80' ? 'monospace' : 'sans-serif';
-            
-            // Configurar tamaño
-            const opt = {
-                margin:       formato === 'ticket80' ? 2 : 10,
-                filename:     `Reporte_${tipo.toUpperCase()}_${formato}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'mm', format: formato === 'ticket80' ? [76, 297] : 'letter', orientation: 'portrait' }
-            };
+    // ESTILOS CRÍTICOS Y DIMENSIONES FIJAS
+    tempDiv.style.color = 'black';
+    tempDiv.style.background = 'white';
+    tempDiv.style.padding = formato === 'ticket80' ? '5mm' : '15mm';
+    tempDiv.style.fontFamily = formato === 'ticket80' ? 'monospace, sans-serif' : 'sans-serif';
+    // Darle un ancho real para que html2canvas pueda medirlo
+    tempDiv.style.width = formato === 'ticket80' ? '76mm' : '800px'; 
+    
+    // TRUCO: Añadirlo al documento pero fuera de la vista para que no estorbe
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    document.body.appendChild(tempDiv);
+    
+    const opt = {
+        margin:       formato === 'ticket80' ? [2,2,2,2] : [10,10,10,10],
+        filename:     `Reporte_${tipo.toUpperCase()}_${formato}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        // Para tickets usamos un largo mayor (800mm) para que no corte listas largas
+        jsPDF:        { unit: 'mm', format: formato === 'ticket80' ? [76, 800] : 'letter', orientation: 'portrait' }
+    };
+
+    showToast("⏳ Generando PDF, por favor espera...");
+    html2pdf().set(opt).from(tempDiv).save().then(() => {
+        // Limpiamos la pantalla borrando el div temporal
+        document.body.removeChild(tempDiv);
+        showToast("✅ PDF descargado exitosamente");
+    }).catch(err => {
+        console.error(err);
+        document.body.removeChild(tempDiv);
+        showToast("❌ Error al generar PDF");
+    });
+}
 
             // Iniciar la descarga usando la librería
             showToast("⏳ Generando PDF, por favor espera...");
