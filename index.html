@@ -327,6 +327,9 @@
                 <div class="form-group"><label>📅 Desde</label><input type="date" id="filtro-desde"></div>
                 <div class="form-group"><label>📅 Hasta</label><input type="date" id="filtro-hasta"></div>
                 <div class="form-group"><label>💳 Estado de Pago</label><select id="filtro-pago"><option value="Todos">Todos</option><option value="Contado">Al Contado</option><option value="Crédito">Al Crédito</option></select></div>
+                <!-- NUEVO FILTRO DE CLIENTE/PROVEEDOR -->
+                <div class="form-group"><label>👥 Cliente / Proveedor</label><select id="filtro-entidad"><option value="Todos">Todos</option></select></div>
+                
                 <button onclick="generarReporte()" class="btn-submit" style="width:auto; padding:12px 25px; background:var(--secondary);">🔍 APLICAR FILTROS GLOBALES</button>
             </div>
 
@@ -585,7 +588,7 @@
         }
 
         function cancelarEdicionTrans(tipo) {
-            const prefix = tipo === 'salidas' ? 'salida' : 'ingreso'; // CORRECCIÓN DEL BUG PRINCIPAL
+            const prefix = tipo === 'salidas' ? 'salida' : 'ingreso'; // CORRECCIÓN DEL BUG 
             document.getElementById(`form-${prefix}`).reset(); 
             document.getElementById(`${prefix}-id`).value = ""; 
             
@@ -638,8 +641,14 @@
             const nombreEntidad = esSalida ? getCliName(obj.cliId) : getProvName(obj.provId);
 
             let rowsHtml = '';
+            let totalItems = 0;
+            let totalCantidades = 0;
+
             obj.detalles.forEach(d => {
-                rowsHtml += `<p style="margin:3px 0; font-size:12px; display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:3px;"><span>${d.cant}x ${d.prodName}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
+                // FORMATO EXACTO: 10 Kg FILETE | Bs. 100.00
+                rowsHtml += `<p style="margin:3px 0; font-size:12px; display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:3px;"><span>${d.cant} ${d.prodUnit} ${d.prodName}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
+                totalItems++;
+                totalCantidades += d.cant;
             });
 
             const previewHtml = `
@@ -655,6 +664,7 @@
                 <hr style="border-top:1px dashed black; margin:5px 0;">
                 ${rowsHtml}
                 <hr style="border-top:1px dashed black; margin:5px 0;">
+                <p style="margin:3px 0; font-size:11px; text-align:left;"><strong>Total de items:</strong> ${totalItems} (Cant: ${totalCantidades})</p>
                 <h3 style="margin:10px 0; text-align:right;">TOTAL: Bs.${obj.total.toFixed(2)}</h3>
                 <p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${obj.pago}</p>
             `;
@@ -729,6 +739,7 @@
             document.getElementById('salida-producto').innerHTML = mapOpt(db.productos); document.getElementById('ingreso-producto').innerHTML = mapOpt(db.productos);
             document.getElementById('salida-cliente').innerHTML = `<option value="">-- Seleccione Cliente --</option>` + (db.clientes||[]).map(item => `<option value="${item.id}">${item.nombre}</option>`).join(''); 
             document.getElementById('ingreso-proveedor').innerHTML = `<option value="">-- Seleccione Proveedor --</option>` + (db.proveedores||[]).map(item => `<option value="${item.id}">${item.nombre}</option>`).join('');
+            prepararFiltros(); // Actualizar también los filtros del reporte
         }
         function getProdName(id) { const p = (db.productos||[]).find(x => x.id === id); return p ? p.nombre : 'Desconocido'; }
         function getProdUnit(id) { const p = (db.productos||[]).find(x => x.id === id); return p ? p.unidad : 'U'; }
@@ -738,12 +749,21 @@
         // ==========================================
         // REPORTES SEPARADOS Y FILTROS
         // ==========================================
-        function prepararFiltros() {}
+        function prepararFiltros() {
+            let opciones = `<option value="Todos">Todos (Global)</option>`;
+            opciones += `<optgroup label="Clientes (Para Ventas)">`;
+            (db.clientes||[]).forEach(item => opciones += `<option value="${item.id}">${item.nombre}</option>`);
+            opciones += `</optgroup><optgroup label="Proveedores (Para Compras)">`;
+            (db.proveedores||[]).forEach(item => opciones += `<option value="${item.id}">${item.nombre}</option>`);
+            opciones += `</optgroup>`;
+            document.getElementById('filtro-entidad').innerHTML = opciones;
+        }
 
         function generarReporte() {
             const fDesde = document.getElementById('filtro-desde').value;
             const fHasta = document.getElementById('filtro-hasta').value;
             const fPago = document.getElementById('filtro-pago').value;
+            const fEntidad = document.getElementById('filtro-entidad').value; // NUEVO FILTRO DE CLIENTE
 
             let arrVentas = [...(db.salidas||[])];
             let arrCompras = [...(db.ingresos||[])];
@@ -751,6 +771,7 @@
             if(fDesde) { arrVentas = arrVentas.filter(x => x.fecha >= fDesde); arrCompras = arrCompras.filter(x => x.fecha >= fDesde); }
             if(fHasta) { arrVentas = arrVentas.filter(x => x.fecha <= fHasta); arrCompras = arrCompras.filter(x => x.fecha <= fHasta); }
             if(fPago !== "Todos") { arrVentas = arrVentas.filter(x => x.pago === fPago); arrCompras = arrCompras.filter(x => x.pago === fPago); }
+            if(fEntidad !== "Todos") { arrVentas = arrVentas.filter(x => x.cliId === fEntidad); arrCompras = arrCompras.filter(x => x.provId === fEntidad); }
             
             reportDataVentas = arrVentas.map(v => ({ num: v.num||0, fecha: v.fecha, entidad: getCliName(v.cliId), prod: formatNombresProductos(v), cant: v.detalles ? v.detalles.reduce((s,d)=>s+d.cant,0) : v.cant, total: v.total, pago: v.pago, raw: v }));
             reportDataCompras = arrCompras.map(c => ({ num: c.num||0, fecha: c.fecha, entidad: getProvName(c.provId), prod: formatNombresProductos(c), cant: c.detalles ? c.detalles.reduce((s,d)=>s+d.cant,0) : c.cant, total: c.total, pago: c.pago, raw: c }));
@@ -780,7 +801,10 @@
             const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
             if (dataToPrint.length === 0) return alert("⚠️ No hay datos para imprimir en esta sección.");
             
-            const titulo = tipo === 'ventas' ? 'REPORTE DE VENTAS (SALIDAS)' : 'REPORTE DE COMPRAS (INGRESOS)';
+            const fEntidad = document.getElementById('filtro-entidad');
+            let tituloExt = fEntidad.value !== 'Todos' ? ` - ${fEntidad.options[fEntidad.selectedIndex].text}` : '';
+            
+            const titulo = (tipo === 'ventas' ? 'REPORTE DE VENTAS' : 'REPORTE DE COMPRAS') + tituloExt.toUpperCase();
             const nombreColumna = tipo === 'ventas' ? 'Cliente' : 'Proveedor';
             const totalGeneral = dataToPrint.reduce((sum, item) => sum + item.total, 0);
 
@@ -812,15 +836,24 @@
             const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
             let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Cant | Producto</span><span>Subtotal</span></div><hr style="border-top:1px dashed black; margin:5px 0;">`;
             
+            let totalItems = 0;
+            let totalCant = 0;
+
             if (reg.detalles) {
                 reg.detalles.forEach(d => {
-                    html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant}x ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
+                    html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant} ${d.prodUnit} ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
+                    totalItems++;
+                    totalCant += d.cant;
                 });
             } else {
-                html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant}x ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`;
+                html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant} ${getProdUnit(reg.prodId)} ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`;
+                totalItems = 1;
+                totalCant = reg.cant;
             }
 
-            html += `<hr style="border-top:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
+            html += `<hr style="border-top:1px dashed black; margin:5px 0;">`;
+            html += `<p style="margin:3px 0; font-size:11px; text-align:left;"><strong>Total de items:</strong> ${totalItems} (Cant: ${totalCant})</p>`;
+            html += `<h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
             
             area.innerHTML = html; document.body.classList.add('printing-ticket80'); window.print(); setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
         }
