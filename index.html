@@ -872,7 +872,7 @@
 
             if (formato === 'ticket80') {
                 let rowsHtml = dataToPrint.map(d => `<div style="display:flex; justify-content:space-between; margin-bottom:3px; font-size:11px;"><span>#${d.num.toString().padStart(3,'0')} | ${d.fecha.substring(5)} | ${d.prod.substring(0,8)}</span><span>Bs.${d.total.toFixed(2)}</span></div>`).join('');
-                return `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>N° | Fecha | Producto</span><span>Total</span></div><hr style="border-top:1px dashed black; margin:5px 0;">${rowsHtml}<hr style="border-top:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>`;
+                return `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p></div><hr style="border-bottom:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>N° | Fecha | Producto</span><span>Total</span></div><hr style="border-bottom:1px dashed black; margin:5px 0;">${rowsHtml}<hr style="border-bottom:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>`;
             } else {
                 let rowsHtml = dataToPrint.map(d => `<tr><td style="padding:10px; border:1px solid #ddd;">N° ${d.num.toString().padStart(4,'0')}</td><td style="padding:10px; border:1px solid #ddd;">${d.fecha}</td><td style="padding:10px; border:1px solid #ddd;">${d.entidad}</td><td style="padding:10px; border:1px solid #ddd;">${d.prod}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${d.cant}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.total.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${d.pago}</td></tr>`).join('');
                 return `<div style="text-align:center; margin-bottom:30px;"><h1 style="margin:0;">${db.config.name}</h1><h2 style="margin:5px 0; color:#555;">${titulo}</h2><p>Fecha de emisión: ${new Date().toLocaleDateString()}</p></div><table style="width:100%; border-collapse: collapse; font-size:14px;"><thead style="background-color:#f4f4f4;"><tr><th style="padding:10px; border:1px solid #ddd; text-align:left;">N° Comp.</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Fecha</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">${nombreColumna}</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Producto(s)</th><th style="padding:10px; border:1px solid #ddd;">Items</th><th style="padding:10px; border:1px solid #ddd; text-align:right;">Total</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Tipo de Pago</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="margin-top:20px; text-align:right;"><h2>Total General: Bs.${totalGeneral.toFixed(2)}</h2></div>`;
@@ -892,55 +892,45 @@
         }
 
         // ==========================================
-// GENERACIÓN Y DESCARGA DE PDF DIRECTA (CORREGIDA)
-// ==========================================
-function descargarPDF(tipo, formato) {
-    const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
-    if (dataToPrint.length === 0) return alert("⚠️ No hay datos para convertir a PDF.");
+        // GENERACIÓN Y DESCARGA DE PDF DIRECTA (CORREGIDA)
+        // ==========================================
+        function descargarPDF(tipo, formato) {
+            const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
+            if (dataToPrint.length === 0) return alert("⚠️ No hay datos para convertir a PDF.");
 
-    const htmlContent = generarHTMLReporte(tipo, formato);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
+            const htmlContent = generarHTMLReporte(tipo, formato);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
 
-    // ESTILOS CRÍTICOS Y DIMENSIONES FIJAS
-    tempDiv.style.color = 'black';
-    tempDiv.style.background = 'white';
-    tempDiv.style.padding = formato === 'ticket80' ? '5mm' : '15mm';
-    tempDiv.style.fontFamily = formato === 'ticket80' ? 'monospace, sans-serif' : 'sans-serif';
-    // Darle un ancho real para que html2canvas pueda medirlo
-    tempDiv.style.width = formato === 'ticket80' ? '76mm' : '800px'; 
-    
-    // TRUCO: Añadirlo al documento pero fuera de la vista para que no estorbe
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.top = '0';
-    document.body.appendChild(tempDiv);
-    
-    const opt = {
-        margin:       formato === 'ticket80' ? [2,2,2,2] : [10,10,10,10],
-        filename:     `Reporte_${tipo.toUpperCase()}_${formato}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        // Para tickets usamos un largo mayor (800mm) para que no corte listas largas
-        jsPDF:        { unit: 'mm', format: formato === 'ticket80' ? [76, 800] : 'letter', orientation: 'portrait' }
-    };
+            // ESTILOS CRÍTICOS Y DIMENSIONES FIJAS
+            tempDiv.style.color = 'black';
+            tempDiv.style.background = 'white';
+            tempDiv.style.padding = formato === 'ticket80' ? '5mm' : '15mm';
+            tempDiv.style.fontFamily = formato === 'ticket80' ? 'monospace, sans-serif' : 'sans-serif';
+            tempDiv.style.width = formato === 'ticket80' ? '76mm' : '800px'; 
+            
+            // TRUCO: Añadirlo al documento pero fuera de la vista para que no estorbe
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            document.body.appendChild(tempDiv);
+            
+            const opt = {
+                margin:       formato === 'ticket80' ? [2,2,2,2] : [10,10,10,10],
+                filename:     `Reporte_${tipo.toUpperCase()}_${formato}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: formato === 'ticket80' ? [76, 800] : 'letter', orientation: 'portrait' }
+            };
 
-    showToast("⏳ Generando PDF, por favor espera...");
-    html2pdf().set(opt).from(tempDiv).save().then(() => {
-        // Limpiamos la pantalla borrando el div temporal
-        document.body.removeChild(tempDiv);
-        showToast("✅ PDF descargado exitosamente");
-    }).catch(err => {
-        console.error(err);
-        document.body.removeChild(tempDiv);
-        showToast("❌ Error al generar PDF");
-    });
-}
-
-            // Iniciar la descarga usando la librería
             showToast("⏳ Generando PDF, por favor espera...");
             html2pdf().set(opt).from(tempDiv).save().then(() => {
+                document.body.removeChild(tempDiv); // Limpieza
                 showToast("✅ PDF descargado exitosamente");
+            }).catch(err => {
+                console.error(err);
+                document.body.removeChild(tempDiv);
+                showToast("❌ Error al generar PDF");
             });
         }
 
@@ -954,13 +944,13 @@ function descargarPDF(tipo, formato) {
             if(formato === 'ticket80') {
                 const area = document.getElementById('ticket-print-area');
                 const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
-                let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Cant | Producto</span><span>Subtotal</span></div><hr style="border-top:1px dashed black; margin:5px 0;">`;
+                let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-bottom:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-bottom:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Cant | Producto</span><span>Subtotal</span></div><hr style="border-bottom:1px dashed black; margin:5px 0;">`;
                 
                 let totalItems = 0; let totalCant = 0;
                 if (reg.detalles) { reg.detalles.forEach(d => { html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant} ${d.prodUnit} ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`; totalItems++; totalCant += d.cant; }); } 
                 else { html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant} ${getProdUnit(reg.prodId)} ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`; totalItems = 1; totalCant = reg.cant; }
 
-                html += `<hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:11px; text-align:left;"><strong>Total de items:</strong> ${totalItems} (Cant: ${totalCant})</p><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
+                html += `<hr style="border-bottom:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:11px; text-align:left;"><strong>Total de items:</strong> ${totalItems} (Cant: ${totalCant})</p><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
                 
                 area.innerHTML = html; document.body.classList.add('printing-ticket80'); window.print(); setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
             } 
