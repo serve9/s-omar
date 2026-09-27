@@ -120,8 +120,18 @@
         .stat-card h3 { font-size: 1.8rem; margin: 10px 0 0 0; color: var(--dark); }
         .stat-card p { color: var(--text-light); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; margin:0;}
         
+        /* TOAST Y MODAL PREVIEW */
         #toast { visibility: hidden; min-width: 250px; background-color: var(--dark); color: #fff; text-align: center; border-radius: 8px; padding: 15px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        
+        #modal-preview { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10000; align-items:center; justify-content:center; }
+        .modal-content { background:white; padding:25px; border-radius:12px; width:90%; max-width:400px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; }
+        .preview-ticket { background:#fdfdfd; border:1px solid #ccc; padding:15px; font-family:monospace; color:black; font-size:12px; margin-bottom:20px; border-radius:4px; max-height:50vh; overflow-y:auto; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+        .modal-actions { display:flex; gap:10px; }
+        .modal-actions button { flex:1; padding:12px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; color:white; transition:0.3s; }
+        .btn-confirmar { background:var(--success); } .btn-confirmar:hover{ filter:brightness(1.1); }
+        .btn-cancelar { background:var(--danger); } .btn-cancelar:hover{ filter:brightness(1.1); }
+
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         
@@ -129,49 +139,20 @@
         
         /* ESTILOS DE IMPRESIÓN CORREGIDOS */
         @media print {
-            /* 1. Ocultar toda la interfaz visual de la app al usar los botones de imprimir */
-            body.printing-ticket80 #app-content,
-            body.printing-carta #app-content { 
-                display: none !important; 
-            }
+            body.printing-ticket80 #app-content, body.printing-ticket80 #modal-preview,
+            body.printing-carta #app-content, body.printing-carta #modal-preview { display: none !important; }
 
-            /* 2. FORZAR que el área del ticket se muestre (cambia de none a block) */
-            body.printing-ticket80 #ticket-print-area { 
-                display: block !important; 
-                width: 76mm; 
-                margin: 0; 
-                padding: 0; 
-                font-family: monospace; 
-                font-size: 12px; 
-                color: black; 
-            }
-            
-            /* 3. FORZAR que el área de la hoja carta se muestre (cambia de none a block) */
-            body.printing-carta #carta-print-area { 
-                display: block !important; 
-                width: 100%; 
-                margin: 0; 
-                padding: 15mm; 
-                font-family: sans-serif; 
-                font-size: 14px; 
-                color: black; 
-                box-sizing: border-box;
-            }
+            body.printing-ticket80 #ticket-print-area { display: block !important; width: 76mm; margin: 0; padding: 0; font-family: monospace; font-size: 12px; color: black; }
+            body.printing-carta #carta-print-area { display: block !important; width: 100%; margin: 0; padding: 15mm; font-family: sans-serif; font-size: 14px; color: black; box-sizing: border-box; }
 
-            /* 4. Asegurar que el fondo sea blanco general y texto negro */
             body { background: white !important; margin: 0; padding: 0; color: black; }
 
-            /* 5. Si imprimes normal (Ctrl+P) sin los botones, ocultamos cosas innecesarias */
             body:not(.printing-ticket80):not(.printing-carta) header, 
             body:not(.printing-ticket80):not(.printing-carta) .nav-menu, 
             body:not(.printing-ticket80):not(.printing-carta) .filtros-reporte, 
             body:not(.printing-ticket80):not(.printing-carta) button, 
-            body:not(.printing-ticket80):not(.printing-carta) .acciones-td { 
-                display: none !important; 
-            }
-            body:not(.printing-ticket80):not(.printing-carta) .panel { 
-                box-shadow: none; max-width: 100%; padding: 0; border: none; 
-            }
+            body:not(.printing-ticket80):not(.printing-carta) .acciones-td { display: none !important; }
+            body:not(.printing-ticket80):not(.printing-carta) .panel { box-shadow: none; max-width: 100%; padding: 0; border: none; }
         }
     </style>
 </head>
@@ -222,8 +203,8 @@
                         <div class="form-group"><label>Nombre del Producto</label><input type="text" id="cat-prod-nombre" placeholder="Ej. Cemento Portland" required></div>
                         <div class="form-group"><label>Tipo de Unidad</label><select id="cat-prod-unidad"><option value="Unidad">Unidad (Pza)</option><option value="Kg">Kilogramo (Kg)</option><option value="Litro">Litro (L)</option><option value="Caja">Caja</option><option value="Metro">Metro (m)</option></select></div>
                         <div style="display:flex; gap:10px;">
-                            <div class="form-group" style="flex:1;"><label>P. Compra ($)</label><input type="number" step="0.01" min="0" id="cat-prod-compra" required></div>
-                            <div class="form-group" style="flex:1;"><label>P. Venta ($)</label><input type="number" step="0.01" min="0" id="cat-prod-venta" required></div>
+                            <div class="form-group" style="flex:1;"><label>P. Compra (Bs.)</label><input type="number" step="0.01" min="0" id="cat-prod-compra" required></div>
+                            <div class="form-group" style="flex:1;"><label>P. Venta (Bs.)</label><input type="number" step="0.01" min="0" id="cat-prod-venta" required></div>
                         </div>
                         <button type="submit" id="btn-prod" class="btn-submit" style="background-color: var(--secondary); margin-top:10px;">➕ Guardar Producto</button>
                         <button type="button" onclick="cancelarEdicion('productos')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
@@ -260,15 +241,15 @@
         <!-- PANEL: VENTAS / SALIDAS -->
         <main id="panel-salidas" class="panel">
             <h2>🛒 Registrar Nueva Venta</h2>
-            <form id="form-salida" onsubmit="saveTransaccion(event, 'salidas')">
+            <form id="form-salida" onsubmit="prepararTransaccion(event, 'salidas')">
                 <input type="hidden" id="salida-id">
                 <div class="form-grid">
                     <div class="form-group"><label>📅 Fecha</label><input type="date" id="salida-fecha" required></div>
                     <div class="form-group"><label>👥 Cliente</label><select id="salida-cliente" required></select></div>
                     <div class="form-group"><label>📦 Producto</label><select id="salida-producto" onchange="calcTotal('salida')" required></select></div>
                     <div class="form-group"><label>🔢 Cantidad</label><input type="number" step="0.01" id="salida-cantidad" value="1" oninput="calcTotal('salida')" required></div>
-                    <div class="form-group"><label>💲 P. Unitario</label><input type="number" step="0.01" id="salida-precio" oninput="calcTotal('salida')" required></div>
-                    <div class="form-group"><label>💰 Total a Cobrar</label><input type="number" id="salida-total" readonly style="color:var(--primary); font-weight:bold; font-size:1.2rem;"></div>
+                    <div class="form-group"><label>💲 P. Unitario (Bs.)</label><input type="number" step="0.01" id="salida-precio" oninput="calcTotal('salida')" required></div>
+                    <div class="form-group"><label>💰 Total a Cobrar (Bs.)</label><input type="number" id="salida-total" readonly style="color:var(--primary); font-weight:bold; font-size:1.2rem;"></div>
                     <div class="form-group"><label>💳 Forma de Pago</label><select id="salida-pago"><option value="Contado">Al Contado</option><option value="Crédito">Al Crédito</option></select></div>
                     <div class="form-group"><label>📝 Motivo</label><select id="salida-motivo"><option value="Venta">Venta Normal</option><option value="Merma">Merma / Dañado</option></select></div>
                 </div>
@@ -282,15 +263,15 @@
         <!-- PANEL: COMPRAS / INGRESOS -->
         <main id="panel-ingresos" class="panel">
             <h2>📦 Registrar Nueva Compra</h2>
-            <form id="form-ingreso" onsubmit="saveTransaccion(event, 'ingresos')">
+            <form id="form-ingreso" onsubmit="prepararTransaccion(event, 'ingresos')">
                 <input type="hidden" id="ingreso-id">
                 <div class="form-grid">
                     <div class="form-group"><label>📅 Fecha</label><input type="date" id="ingreso-fecha" required></div>
                     <div class="form-group"><label>🏢 Proveedor</label><select id="ingreso-proveedor" required></select></div>
                     <div class="form-group"><label>📦 Producto</label><select id="ingreso-producto" onchange="calcTotal('ingreso')" required></select></div>
                     <div class="form-group"><label>🔢 Cantidad</label><input type="number" step="0.01" id="ingreso-cantidad" value="1" oninput="calcTotal('ingreso')" required></div>
-                    <div class="form-group"><label>💲 P. Unitario</label><input type="number" step="0.01" id="ingreso-precio" oninput="calcTotal('ingreso')" required></div>
-                    <div class="form-group"><label>💰 Total a Pagar</label><input type="number" id="ingreso-total" readonly style="color:var(--success); font-weight:bold; font-size:1.2rem;"></div>
+                    <div class="form-group"><label>💲 P. Unitario (Bs.)</label><input type="number" step="0.01" id="ingreso-precio" oninput="calcTotal('ingreso')" required></div>
+                    <div class="form-group"><label>💰 Total a Pagar (Bs.)</label><input type="number" id="ingreso-total" readonly style="color:var(--success); font-weight:bold; font-size:1.2rem;"></div>
                     <div class="form-group"><label>💳 Forma de Pago</label><select id="ingreso-pago"><option value="Contado">Al Contado</option><option value="Crédito">Al Crédito</option></select></div>
                     <div class="form-group"><label>📝 Observación</label><input type="text" id="ingreso-obs" placeholder="Opcional"></div>
                 </div>
@@ -314,9 +295,9 @@
 
             <!-- DASHBOARD -->
             <div class="dashboard-grid">
-                <div class="stat-card"><p>Total Ventas</p><h3 id="rep-ventas" style="color:var(--primary)">$0.00</h3></div>
-                <div class="stat-card"><p>Total Compras</p><h3 id="rep-compras" style="color:var(--success)">$0.00</h3></div>
-                <div class="stat-card"><p>Balance Global</p><h3 id="rep-balance" style="color:var(--dark)">$0.00</h3></div>
+                <div class="stat-card"><p>Total Ventas</p><h3 id="rep-ventas" style="color:var(--primary)">Bs.0.00</h3></div>
+                <div class="stat-card"><p>Total Compras</p><h3 id="rep-compras" style="color:var(--success)">Bs.0.00</h3></div>
+                <div class="stat-card"><p>Balance Global</p><h3 id="rep-balance" style="color:var(--dark)">Bs.0.00</h3></div>
             </div>
 
             <!-- SECCIÓN VENTAS -->
@@ -399,6 +380,18 @@
         </main>
     </div>
 
+    <!-- MODAL VISTA PREVIA (VOUCHER) -->
+    <div id="modal-preview">
+        <div class="modal-content">
+            <h3 style="text-align:center; margin-top:0; color:var(--dark);">👀 Vista Preliminar</h3>
+            <div id="preview-content" class="preview-ticket"></div>
+            <div class="modal-actions">
+                <button class="btn-confirmar" onclick="confirmarTransaccion()">✅ ACEPTAR E IMPRIMIR</button>
+                <button class="btn-cancelar" onclick="cerrarPreview()">❌ CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ÁREAS DE IMPRESIÓN OCULTAS -->
     <div id="ticket-print-area"></div>
     <div id="carta-print-area"></div>
@@ -430,6 +423,24 @@
         
         let reportDataVentas = []; 
         let reportDataCompras = []; 
+        let pendingTransaccion = null; // Para guardar temporalmente antes de aceptar
+
+        // ASIGNACIÓN AUTOMÁTICA DE FECHA ACTUAL
+        function setDefaultDates() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const fechaActual = `${yyyy}-${mm}-${dd}`;
+
+            document.getElementById('salida-fecha').value = fechaActual;
+            document.getElementById('ingreso-fecha').value = fechaActual;
+            document.getElementById('filtro-desde').value = fechaActual;
+            document.getElementById('filtro-hasta').value = fechaActual;
+        }
+
+        // Ejecutar al cargar la página
+        setDefaultDates();
 
         // ==========================================
         // LOGIN
@@ -448,9 +459,6 @@
                 document.getElementById('login-error').style.display = 'block';
             }
         }
-
-        document.getElementById('ingreso-fecha').valueAsDate = new Date();
-        document.getElementById('salida-fecha').valueAsDate = new Date();
 
         // ==========================================
         // CONEXIÓN EN TIEMPO REAL
@@ -573,18 +581,18 @@
             if(tipo==='productos') { document.getElementById('form-producto').reset(); document.getElementById('cat-prod-id').value = ""; document.getElementById('btn-prod').innerText = "➕ Guardar Producto"; document.getElementById('btn-prod').classList.remove('edit-mode'); document.getElementById('btn-prod').nextElementSibling.style.display = "none"; }
             if(tipo==='clientes') { document.getElementById('form-cliente').reset(); document.getElementById('cat-cli-id').value = ""; document.getElementById('btn-cli').innerText = "➕ Guardar Cliente"; document.getElementById('btn-cli').classList.remove('edit-mode'); document.getElementById('btn-cli').nextElementSibling.style.display = "none"; }
             if(tipo==='proveedores') { document.getElementById('form-proveedor').reset(); document.getElementById('cat-prov-id').value = ""; document.getElementById('btn-prov').innerText = "➕ Guardar Proveedor"; document.getElementById('btn-prov').classList.remove('edit-mode'); document.getElementById('btn-prov').nextElementSibling.style.display = "none"; }
-            if(tipo==='salidas') { document.getElementById('form-salida').reset(); document.getElementById('salida-id').value = ""; document.getElementById('btn-salida').innerText = "📤 PROCESAR VENTA"; document.getElementById('btn-salida').classList.remove('edit-mode'); document.getElementById('btn-salida').nextElementSibling.style.display = "none"; document.getElementById('salida-fecha').valueAsDate = new Date(); }
-            if(tipo==='ingresos') { document.getElementById('form-ingreso').reset(); document.getElementById('ingreso-id').value = ""; document.getElementById('btn-ingreso').innerText = "📥 PROCESAR COMPRA"; document.getElementById('btn-ingreso').classList.remove('edit-mode'); document.getElementById('btn-ingreso').nextElementSibling.style.display = "none"; document.getElementById('ingreso-fecha').valueAsDate = new Date();}
+            if(tipo==='salidas') { document.getElementById('form-salida').reset(); document.getElementById('salida-id').value = ""; document.getElementById('btn-salida').innerText = "📤 PROCESAR VENTA"; document.getElementById('btn-salida').classList.remove('edit-mode'); document.getElementById('btn-salida').nextElementSibling.style.display = "none"; setDefaultDates(); }
+            if(tipo==='ingresos') { document.getElementById('form-ingreso').reset(); document.getElementById('ingreso-id').value = ""; document.getElementById('btn-ingreso').innerText = "📥 PROCESAR COMPRA"; document.getElementById('btn-ingreso').classList.remove('edit-mode'); document.getElementById('btn-ingreso').nextElementSibling.style.display = "none"; setDefaultDates();}
         }
 
         function renderCatalogos() {
-            document.getElementById('table-cat-productos').innerHTML = (db.productos||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>${p.unidad} | Compra: $${p.compra} | Venta: $${p.venta}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('productos','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('productos','${p.id}')">🗑️</button></td></tr>`).join('');
+            document.getElementById('table-cat-productos').innerHTML = (db.productos||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>${p.unidad} | Compra: Bs.${p.compra} | Venta: Bs.${p.venta}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('productos','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('productos','${p.id}')">🗑️</button></td></tr>`).join('');
             document.getElementById('table-cat-clientes').innerHTML = (db.clientes||[]).map(c => `<tr><td><b>${c.nombre}</b><br><small>Tel: ${c.tel||'N/A'}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('clientes','${c.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('clientes','${c.id}')">🗑️</button></td></tr>`).join('');
             document.getElementById('table-cat-proveedores').innerHTML = (db.proveedores||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>Tel: ${p.tel||'N/A'}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('proveedores','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('proveedores','${p.id}')">🗑️</button></td></tr>`).join('');
         }
 
         // ==========================================
-        // VENTAS Y COMPRAS CON EDICIÓN
+        // VENTAS Y COMPRAS CON VISTA PREVIA
         // ==========================================
         function calcTotal(tipo) {
             const prod = (db.productos||[]).find(p => p.id === document.getElementById(`${tipo}-producto`).value);
@@ -597,18 +605,88 @@
             const precio = parseFloat(precioInput.value) || 0; document.getElementById(`${tipo}-total`).value = (precio * cant).toFixed(2);
         }
 
-        function saveTransaccion(e, tipo) {
+        // Preparar datos y mostrar el voucher previo
+        function prepararTransaccion(e, tipo) {
             e.preventDefault();
             const esSalida = tipo === 'salidas'; const prefix = esSalida ? 'salida' : 'ingreso';
-            const prodId = document.getElementById(`${prefix}-producto`).value; if(!prodId) return alert("Selecciona un producto");
+            const prodId = document.getElementById(`${prefix}-producto`).value; 
+            if(!prodId) return alert("Selecciona un producto");
 
             const id = document.getElementById(`${prefix}-id`).value || Date.now().toString();
-            const obj = { id, fecha: document.getElementById(`${prefix}-fecha`).value, prodId, cant: parseFloat(document.getElementById(`${prefix}-cantidad`).value), precio: parseFloat(document.getElementById(`${prefix}-precio`).value), total: parseFloat(document.getElementById(`${prefix}-total`).value), pago: document.getElementById(`${prefix}-pago`).value, };
+            const obj = { 
+                id, 
+                fecha: document.getElementById(`${prefix}-fecha`).value, 
+                prodId, 
+                cant: parseFloat(document.getElementById(`${prefix}-cantidad`).value), 
+                precio: parseFloat(document.getElementById(`${prefix}-precio`).value), 
+                total: parseFloat(document.getElementById(`${prefix}-total`).value), 
+                pago: document.getElementById(`${prefix}-pago`).value, 
+            };
 
-            if(esSalida) { obj.cliId = document.getElementById('salida-cliente').value; obj.motivo = document.getElementById('salida-motivo').value; } else { obj.provId = document.getElementById('ingreso-proveedor').value; obj.obs = document.getElementById('ingreso-obs').value.trim(); }
+            if(esSalida) { 
+                obj.cliId = document.getElementById('salida-cliente').value; 
+                obj.motivo = document.getElementById('salida-motivo').value; 
+            } else { 
+                obj.provId = document.getElementById('ingreso-proveedor').value; 
+                obj.obs = document.getElementById('ingreso-obs').value.trim(); 
+            }
 
-            const index = db[tipo].findIndex(item => item.id === id); if(index >= 0) db[tipo][index] = obj; else db[tipo].push(obj);
-            guardarEnNube(); cancelarEdicion(tipo); showToast("✅ Movimiento Registrado");
+            pendingTransaccion = { tipo, data: obj };
+
+            // Generar HTML de la Vista Previa
+            const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
+            const nombreColumna = esSalida ? 'Cliente' : 'Proveedor';
+            const nombreEntidad = esSalida ? getCliName(obj.cliId) : getProvName(obj.provId);
+            const nombreProd = getProdName(obj.prodId);
+            const unidadProd = getProdUnit(obj.prodId);
+
+            const previewHtml = `
+                <div style="text-align:center; margin-bottom:10px;">
+                    <h3 style="margin:0; font-size:16px;">${db.config.name}</h3>
+                    <p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p>
+                    <p style="margin:0; font-size:10px;">Fecha: ${obj.fecha}</p>
+                </div>
+                <hr style="border-top:1px dashed black; margin:5px 0;">
+                <p style="margin:3px 0; font-size:12px;"><strong>${nombreColumna}:</strong><br>${nombreEntidad}</p>
+                <hr style="border-top:1px dashed black; margin:5px 0;">
+                <p style="margin:3px 0; font-size:12px;"><strong>Producto:</strong><br>${nombreProd}</p>
+                <p style="margin:3px 0; font-size:12px;"><strong>Cantidad:</strong> ${obj.cant} ${unidadProd}</p>
+                <p style="margin:3px 0; font-size:12px;"><strong>Precio Unit.:</strong> Bs.${obj.precio.toFixed(2)}</p>
+                <h4 style="margin:5px 0; text-align:right;">Total: Bs.${obj.total.toFixed(2)}</h4>
+                <p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${obj.pago}</p>
+            `;
+            
+            document.getElementById('preview-content').innerHTML = previewHtml;
+            document.getElementById('modal-preview').style.display = 'flex';
+        }
+
+        // Si el usuario acepta, se guarda y se imprime
+        function confirmarTransaccion() {
+            if(!pendingTransaccion) return;
+            const { tipo, data } = pendingTransaccion;
+            
+            const index = db[tipo].findIndex(item => item.id === data.id); 
+            if(index >= 0) db[tipo][index] = data; else db[tipo].push(data);
+            
+            guardarEnNube(); 
+            cancelarEdicion(tipo); 
+            document.getElementById('modal-preview').style.display = 'none';
+            showToast("✅ Movimiento Registrado con Éxito");
+            
+            // Mandamos a imprimir automáticamente el ticket 80mm
+            printComprobanteUnico(tipo, data.id);
+            pendingTransaccion = null;
+        }
+
+        // Si el usuario cancela, se anula la venta/compra
+        function cerrarPreview() {
+            if(!pendingTransaccion) return;
+            const { tipo } = pendingTransaccion;
+            
+            document.getElementById('modal-preview').style.display = 'none';
+            cancelarEdicion(tipo); // Esto limpia todos los campos (anulando la venta)
+            pendingTransaccion = null;
+            showToast("❌ Operación Cancelada");
         }
 
         function editarTrans(tipo, id) {
@@ -625,8 +703,8 @@
         }
 
         function renderTransacciones() {
-            document.getElementById('table-salidas').innerHTML = (db.salidas||[]).slice().reverse().map(item => `<tr><td>${item.fecha}</td><td>${getCliName(item.cliId)}</td><td><b>${getProdName(item.prodId)}</b></td><td>${item.cant}</td><td style="color:var(--danger); font-weight:bold;">$${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('salidas', ${item.id})">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('salidas', ${item.id})">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('salidas', ${item.id})">🗑️</button></td></tr>`).join('');
-            document.getElementById('table-ingresos').innerHTML = (db.ingresos||[]).slice().reverse().map(item => `<tr><td>${item.fecha}</td><td>${getProvName(item.provId)}</td><td><b>${getProdName(item.prodId)}</b></td><td>${item.cant}</td><td style="color:var(--success); font-weight:bold;">$${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('ingresos', ${item.id})">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('ingresos', ${item.id})">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('ingresos', ${item.id})">🗑️</button></td></tr>`).join('');
+            document.getElementById('table-salidas').innerHTML = (db.salidas||[]).slice().reverse().map(item => `<tr><td>${item.fecha}</td><td>${getCliName(item.cliId)}</td><td><b>${getProdName(item.prodId)}</b></td><td>${item.cant}</td><td style="color:var(--danger); font-weight:bold;">Bs.${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('salidas', ${item.id})">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('salidas', ${item.id})">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('salidas', ${item.id})">🗑️</button></td></tr>`).join('');
+            document.getElementById('table-ingresos').innerHTML = (db.ingresos||[]).slice().reverse().map(item => `<tr><td>${item.fecha}</td><td>${getProvName(item.provId)}</td><td><b>${getProdName(item.prodId)}</b></td><td>${item.cant}</td><td style="color:var(--success); font-weight:bold;">Bs.${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('ingresos', ${item.id})">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('ingresos', ${item.id})">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('ingresos', ${item.id})">🗑️</button></td></tr>`).join('');
         }
 
         // --- UTILIDADES ---
@@ -644,7 +722,7 @@
         // REPORTES SEPARADOS Y FILTROS
         // ==========================================
         function prepararFiltros() {
-            // El filtro de entidad se quitó del diseño global para simplificar ya que ahora dividimos en dos tablas
+            // Se quitó filtro entidad del diseño global para simplificar
         }
 
         function generarReporte() {
@@ -669,12 +747,12 @@
 
             const totalV = arrVentas.reduce((sum, item) => sum + item.total, 0);
             const totalC = arrCompras.reduce((sum, item) => sum + item.total, 0);
-            document.getElementById('rep-ventas').textContent = '$' + totalV.toFixed(2);
-            document.getElementById('rep-compras').textContent = '$' + totalC.toFixed(2);
-            document.getElementById('rep-balance').textContent = '$' + (totalV - totalC).toFixed(2);
+            document.getElementById('rep-ventas').textContent = 'Bs.' + totalV.toFixed(2);
+            document.getElementById('rep-compras').textContent = 'Bs.' + totalC.toFixed(2);
+            document.getElementById('rep-balance').textContent = 'Bs.' + (totalV - totalC).toFixed(2);
 
-            document.getElementById('table-reporte-ventas').innerHTML = reportDataVentas.map(d => `<tr><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">$${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
-            document.getElementById('table-reporte-compras').innerHTML = reportDataCompras.map(d => `<tr><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">$${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
+            document.getElementById('table-reporte-ventas').innerHTML = reportDataVentas.map(d => `<tr><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
+            document.getElementById('table-reporte-compras').innerHTML = reportDataCompras.map(d => `<tr><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
 
             // STOCK
             const stockMap = {}; (db.productos||[]).forEach(p => stockMap[p.id] = { nom: p.nombre, uni: p.unidad, in:0, out:0 });
@@ -700,7 +778,7 @@
 
             if (formato === 'ticket80') {
                 const area = document.getElementById('ticket-print-area');
-                let rowsHtml = dataToPrint.map(d => `<div style="display:flex; justify-content:space-between; margin-bottom:3px; font-size:11px;"><span>${d.fecha.substring(5)} | ${d.prod.substring(0,12)}</span><span>$${d.total.toFixed(2)}</span></div>`).join('');
+                let rowsHtml = dataToPrint.map(d => `<div style="display:flex; justify-content:space-between; margin-bottom:3px; font-size:11px;"><span>${d.fecha.substring(5)} | ${d.prod.substring(0,12)}</span><span>Bs.${d.total.toFixed(2)}</span></div>`).join('');
                 
                 area.innerHTML = `
                     <div style="text-align:center; margin-bottom:10px;">
@@ -712,7 +790,7 @@
                     <hr style="border-top:1px dashed black; margin:5px 0;">
                     ${rowsHtml}
                     <hr style="border-top:1px dashed black; margin:5px 0;">
-                    <h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: $${totalGeneral.toFixed(2)}</h4>
+                    <h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>
                 `;
                 document.body.classList.add('printing-ticket80');
                 window.print();
@@ -720,7 +798,7 @@
             } 
             else if (formato === 'carta') {
                 const area = document.getElementById('carta-print-area');
-                let rowsHtml = dataToPrint.map(d => `<tr><td style="padding:10px; border:1px solid #ddd;">${d.fecha}</td><td style="padding:10px; border:1px solid #ddd;">${d.entidad}</td><td style="padding:10px; border:1px solid #ddd;">${d.prod}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${d.cant}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">$${d.total.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${d.pago}</td></tr>`).join('');
+                let rowsHtml = dataToPrint.map(d => `<tr><td style="padding:10px; border:1px solid #ddd;">${d.fecha}</td><td style="padding:10px; border:1px solid #ddd;">${d.entidad}</td><td style="padding:10px; border:1px solid #ddd;">${d.prod}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${d.cant}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.total.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${d.pago}</td></tr>`).join('');
                 
                 area.innerHTML = `
                     <div style="text-align:center; margin-bottom:30px;">
@@ -735,7 +813,7 @@
                         <tbody>${rowsHtml}</tbody>
                     </table>
                     <div style="margin-top:20px; text-align:right;">
-                        <h2>Total General: $${totalGeneral.toFixed(2)}</h2>
+                        <h2>Total General: Bs.${totalGeneral.toFixed(2)}</h2>
                     </div>
                 `;
                 document.body.classList.add('printing-carta');
@@ -744,14 +822,13 @@
             }
         }
 
-        // Impresión de comprobante individual desde el historial
+        // Impresión de comprobante individual desde el historial o al aceptar la venta
         function printComprobanteUnico(tipo, id) {
             const reg = db[tipo].find(i => i.id === id); if(!reg) return;
             const esSalida = tipo === 'salidas'; const area = document.getElementById('ticket-print-area');
-            let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:10px;">${esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA'}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>Producto:</strong><br>${getProdName(reg.prodId)}</p><p style="margin:3px 0; font-size:12px;"><strong>Cantidad:</strong> ${reg.cant} ${getProdUnit(reg.prodId)}</p><p style="margin:3px 0; font-size:12px;"><strong>Precio Unit.:</strong> $${reg.precio.toFixed(2)}</p><h4 style="margin:5px 0; text-align:right;">Total: $${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
+            let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:10px; font-weight:bold;">${esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA'}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>Producto:</strong><br>${getProdName(reg.prodId)}</p><p style="margin:3px 0; font-size:12px;"><strong>Cantidad:</strong> ${reg.cant} ${getProdUnit(reg.prodId)}</p><p style="margin:3px 0; font-size:12px;"><strong>Precio Unit.:</strong> Bs.${reg.precio.toFixed(2)}</p><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
             area.innerHTML = html; document.body.classList.add('printing-ticket80'); window.print(); setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
         }
     </script>
 </body>
 </html>
-
