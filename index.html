@@ -551,7 +551,6 @@
             let cart = tipo === 'salida' ? cartSalida : cartIngreso;
             cart.push({ prodId, prodName, prodUnit, cant, precio, subtotal });
             
-            // Limpiar inputs
             document.getElementById(`${tipo}-producto`).value = '';
             document.getElementById(`${tipo}-cantidad`).value = '1';
             document.getElementById(`${tipo}-precio`).value = '';
@@ -586,12 +585,14 @@
         }
 
         function cancelarEdicionTrans(tipo) {
-            document.getElementById(`form-${tipo}`).reset(); 
-            document.getElementById(`${tipo}-id`).value = ""; 
-            if(tipo === 'salidas') cartSalida = []; else cartIngreso = [];
-            renderCarrito(tipo);
+            const prefix = tipo === 'salidas' ? 'salida' : 'ingreso'; // CORRECCIÓN DEL BUG PRINCIPAL
+            document.getElementById(`form-${prefix}`).reset(); 
+            document.getElementById(`${prefix}-id`).value = ""; 
             
-            const btn = document.getElementById(`btn-${tipo}`);
+            if(tipo === 'salidas') cartSalida = []; else cartIngreso = [];
+            renderCarrito(prefix);
+            
+            const btn = document.getElementById(`btn-${prefix}`);
             btn.innerText = tipo === 'salidas' ? "📤 PROCESAR VENTA" : "📥 PROCESAR COMPRA"; 
             btn.classList.remove('edit-mode'); 
             btn.nextElementSibling.style.display = "none"; 
@@ -609,7 +610,6 @@
             if(cart.length === 0) return alert("⚠️ El carrito está vacío. Agrega al menos un producto.");
 
             const id = document.getElementById(`${prefix}-id`).value || Date.now().toString();
-            // Generar N° correlativo secuencial
             const maxNum = (db[tipo]||[]).reduce((max, item) => Math.max(max, item.num || 0), 0);
             const num = (document.getElementById(`${prefix}-id`).value !== "") ? (db[tipo].find(i=>i.id===id).num) : (maxNum + 1);
             
@@ -633,7 +633,6 @@
 
             pendingTransaccion = { tipo, data: obj };
 
-            // Generar HTML de la Vista Previa (Multiproducto)
             const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
             const nombreColumna = esSalida ? 'Cliente' : 'Proveedor';
             const nombreEntidad = esSalida ? getCliName(obj.cliId) : getProvName(obj.provId);
@@ -698,15 +697,13 @@
             document.getElementById(`${prefix}-pago`).value = item.pago;
             if(esSalida) { document.getElementById('salida-cliente').value = item.cliId; document.getElementById('salida-motivo').value = item.motivo; } else { document.getElementById('ingreso-proveedor').value = item.provId; document.getElementById('ingreso-obs').value = item.obs; }
             
-            // Cargar productos al carrito (Soporte para datos antiguos de 1 producto y nuevos multiproductos)
             if(item.detalles) {
                 if(esSalida) cartSalida = [...item.detalles]; else cartIngreso = [...item.detalles];
             } else {
-                // Adaptar registro antiguo a la nueva estructura de carrito
                 const prodLegacy = { prodId: item.prodId, prodName: getProdName(item.prodId), prodUnit: getProdUnit(item.prodId), cant: item.cant, precio: item.precio, subtotal: item.total };
                 if(esSalida) cartSalida = [prodLegacy]; else cartIngreso = [prodLegacy];
             }
-            renderCarrito(tipo);
+            renderCarrito(prefix);
 
             const btn = document.getElementById(`btn-${prefix}`); btn.innerText = "✏️ ACTUALIZAR REGISTRO"; btn.classList.add('edit-mode'); btn.nextElementSibling.style.display = "block"; window.scrollTo(0,0);
         }
@@ -718,7 +715,7 @@
                 if(item.detalles.length === 1) return item.detalles[0].prodName;
                 return `Varios (${item.detalles.length} items)`;
             }
-            return getProdName(item.prodId); // Soporte datos viejos
+            return getProdName(item.prodId);
         }
 
         function renderTransacciones() {
@@ -766,7 +763,6 @@
             document.getElementById('table-reporte-ventas').innerHTML = reportDataVentas.map(d => `<tr><td>N° ${d.num.toString().padStart(4,'0')}</td><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
             document.getElementById('table-reporte-compras').innerHTML = reportDataCompras.map(d => `<tr><td>N° ${d.num.toString().padStart(4,'0')}</td><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
 
-            // ACTUALIZACIÓN DE STOCK (SUMANDO PRODUCTOS MULTIPLES O SIMPLES)
             const stockMap = {}; (db.productos||[]).forEach(p => stockMap[p.id] = { nom: p.nombre, uni: p.unidad, in:0, out:0 });
             (db.ingresos||[]).forEach(i => { if(i.detalles) { i.detalles.forEach(d => { if(stockMap[d.prodId]) stockMap[d.prodId].in += d.cant; }); } else { if(stockMap[i.prodId]) stockMap[i.prodId].in += i.cant; }});
             (db.salidas||[]).forEach(s => { if(s.detalles) { s.detalles.forEach(d => { if(stockMap[d.prodId]) stockMap[d.prodId].out += d.cant; }); } else { if(stockMap[s.prodId]) stockMap[s.prodId].out += s.cant; }});
@@ -816,13 +812,11 @@
             const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
             let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Cant | Producto</span><span>Subtotal</span></div><hr style="border-top:1px dashed black; margin:5px 0;">`;
             
-            // Loop para múltiples productos
             if (reg.detalles) {
                 reg.detalles.forEach(d => {
                     html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant}x ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
                 });
             } else {
-                // Soporte para datos viejos
                 html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant}x ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`;
             }
 
