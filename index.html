@@ -76,7 +76,6 @@
         .form-group label { font-weight: 600; font-size: 0.9rem; color: var(--dark); }
         .form-group input, .form-group select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; background: #fff; transition: 0.3s; }
         .form-group input:focus, .form-group select:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2); }
-        .form-group input[readonly] { background-color: #f8f9fa; font-weight: bold; color: var(--primary); border-color: #eee; }
         
         .btn-submit { background-color: var(--dark); color: white; border: none; padding: 14px 20px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .btn-submit:hover { filter: brightness(1.15); transform: translateY(-2px); }
@@ -163,8 +162,8 @@
         <div class="login-box">
             <h2>🏢 Acceso Seguro</h2>
             <p class="subtitle">Ingresa tus credenciales para continuar</p>
-            <input type="text" id="login-user" placeholder="👤 Usuario">
-            <input type="password" id="login-pass" placeholder="🔑 Contraseña">
+            <input type="text" id="login-user" placeholder="👤 Usuario" onkeypress="if(event.key === 'Enter') verificarLogin()">
+            <input type="password" id="login-pass" placeholder="🔑 Contraseña" onkeypress="if(event.key === 'Enter') verificarLogin()">
             <button onclick="verificarLogin()">ENTRAR AL SISTEMA</button>
             <p id="login-error" style="color: var(--danger); margin-top: 15px; display: none; font-weight: bold;">❌ Usuario o contraseña incorrectos</p>
         </div>
@@ -207,7 +206,7 @@
                             <div class="form-group" style="flex:1;"><label>P. Venta (Bs.)</label><input type="number" step="0.01" min="0" id="cat-prod-venta" required></div>
                         </div>
                         <button type="submit" id="btn-prod" class="btn-submit" style="background-color: var(--secondary); margin-top:10px;">➕ Guardar Producto</button>
-                        <button type="button" onclick="cancelarEdicion('productos')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
+                        <button type="button" onclick="cancelarEdicionCat('productos')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
                     </form>
                     <div class="table-responsive"><table id="table-cat-productos"></table></div>
                 </div>
@@ -219,7 +218,7 @@
                         <div class="form-group"><label>Nombre del Cliente</label><input type="text" id="cat-cli-nombre" placeholder="Ej. Juan Pérez" required></div>
                         <div class="form-group"><label>Teléfono / Contacto</label><input type="text" id="cat-cli-tel" placeholder="Ej. 70000000"></div>
                         <button type="submit" id="btn-cli" class="btn-submit" style="background-color:var(--info); margin-top:10px;">➕ Guardar Cliente</button>
-                        <button type="button" onclick="cancelarEdicion('clientes')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
+                        <button type="button" onclick="cancelarEdicionCat('clientes')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
                     </form>
                     <div class="table-responsive"><table id="table-cat-clientes"></table></div>
                 </div>
@@ -231,7 +230,7 @@
                         <div class="form-group"><label>Nombre del Proveedor</label><input type="text" id="cat-prov-nombre" placeholder="Ej. Distribuidora Central" required></div>
                         <div class="form-group"><label>Teléfono / Contacto</label><input type="text" id="cat-prov-tel" placeholder="Ej. 71111111"></div>
                         <button type="submit" id="btn-prov" class="btn-submit" style="background-color:var(--success); margin-top:10px;">➕ Guardar Proveedor</button>
-                        <button type="button" onclick="cancelarEdicion('proveedores')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
+                        <button type="button" onclick="cancelarEdicionCat('proveedores')" style="display:none; margin-top:8px; width:100%; padding:10px; border-radius:8px; border:none; cursor:pointer;">❌ Cancelar Edición</button>
                     </form>
                     <div class="table-responsive"><table id="table-cat-proveedores"></table></div>
                 </div>
@@ -243,21 +242,40 @@
             <h2>🛒 Registrar Nueva Venta</h2>
             <form id="form-salida" onsubmit="prepararTransaccion(event, 'salidas')">
                 <input type="hidden" id="salida-id">
+                
                 <div class="form-grid">
                     <div class="form-group"><label>📅 Fecha</label><input type="date" id="salida-fecha" required></div>
                     <div class="form-group"><label>👥 Cliente</label><select id="salida-cliente" required></select></div>
-                    <div class="form-group"><label>📦 Producto</label><select id="salida-producto" onchange="calcTotal('salida')" required></select></div>
-                    <div class="form-group"><label>🔢 Cantidad</label><input type="number" step="0.01" id="salida-cantidad" value="1" oninput="calcTotal('salida')" required></div>
-                    <div class="form-group"><label>💲 P. Unitario (Bs.)</label><input type="number" step="0.01" id="salida-precio" oninput="calcTotal('salida')" required></div>
-                    <div class="form-group"><label>💰 Total a Cobrar (Bs.)</label><input type="number" id="salida-total" readonly style="color:var(--primary); font-weight:bold; font-size:1.2rem;"></div>
                     <div class="form-group"><label>💳 Forma de Pago</label><select id="salida-pago"><option value="Contado">Al Contado</option><option value="Crédito">Al Crédito</option></select></div>
                     <div class="form-group"><label>📝 Motivo</label><select id="salida-motivo"><option value="Venta">Venta Normal</option><option value="Merma">Merma / Dañado</option></select></div>
                 </div>
+                
+                <hr style="border:1px solid #eee; margin:20px 0;">
+                <h3 style="margin-top:0; color:var(--info);">📦 Añadir Productos al Carrito</h3>
+                
+                <div class="form-grid" style="align-items: flex-end;">
+                    <div class="form-group"><label>Producto</label><select id="salida-producto" onchange="calcTotal('salida')"></select></div>
+                    <div class="form-group"><label>Cantidad</label><input type="number" step="0.01" id="salida-cantidad" value="1"></div>
+                    <div class="form-group"><label>P. Unit (Bs.)</label><input type="number" step="0.01" id="salida-precio"></div>
+                    <button type="button" class="btn-submit" style="background-color:var(--info); height:46px;" onclick="agregarAlCarrito('salida')">➕ AGREGAR</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th>❌</th></tr></thead>
+                        <tbody id="carrito-salida-body"></tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:8px;">
+                    <h2 style="margin:0; color:var(--primary); font-size:1.8rem;">TOTAL: Bs. <span id="salida-total-global">0.00</span></h2>
+                </div>
+
                 <button type="submit" id="btn-salida" class="btn-submit salida">📤 PROCESAR VENTA</button>
-                <button type="button" onclick="cancelarEdicion('salidas')" style="display:none; margin-top:10px; width:100%; padding:12px; border-radius:8px; border:none; cursor:pointer; background:#eee;">❌ Cancelar Edición</button>
+                <button type="button" onclick="cancelarEdicionTrans('salidas')" style="display:none; margin-top:10px; width:100%; padding:12px; border-radius:8px; border:none; cursor:pointer; background:#eee;">❌ Cancelar Edición / Limpiar</button>
             </form>
             <h3>📜 Historial de Ventas Recientes</h3>
-            <div class="table-responsive"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Acciones</th></tr></thead><tbody id="table-salidas"></tbody></table></div>
+            <div class="table-responsive"><table><thead><tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Pago</th><th>Acciones</th></tr></thead><tbody id="table-salidas"></tbody></table></div>
         </main>
 
         <!-- PANEL: COMPRAS / INGRESOS -->
@@ -265,21 +283,40 @@
             <h2>📦 Registrar Nueva Compra</h2>
             <form id="form-ingreso" onsubmit="prepararTransaccion(event, 'ingresos')">
                 <input type="hidden" id="ingreso-id">
+                
                 <div class="form-grid">
                     <div class="form-group"><label>📅 Fecha</label><input type="date" id="ingreso-fecha" required></div>
                     <div class="form-group"><label>🏢 Proveedor</label><select id="ingreso-proveedor" required></select></div>
-                    <div class="form-group"><label>📦 Producto</label><select id="ingreso-producto" onchange="calcTotal('ingreso')" required></select></div>
-                    <div class="form-group"><label>🔢 Cantidad</label><input type="number" step="0.01" id="ingreso-cantidad" value="1" oninput="calcTotal('ingreso')" required></div>
-                    <div class="form-group"><label>💲 P. Unitario (Bs.)</label><input type="number" step="0.01" id="ingreso-precio" oninput="calcTotal('ingreso')" required></div>
-                    <div class="form-group"><label>💰 Total a Pagar (Bs.)</label><input type="number" id="ingreso-total" readonly style="color:var(--success); font-weight:bold; font-size:1.2rem;"></div>
                     <div class="form-group"><label>💳 Forma de Pago</label><select id="ingreso-pago"><option value="Contado">Al Contado</option><option value="Crédito">Al Crédito</option></select></div>
                     <div class="form-group"><label>📝 Observación</label><input type="text" id="ingreso-obs" placeholder="Opcional"></div>
                 </div>
+
+                <hr style="border:1px solid #eee; margin:20px 0;">
+                <h3 style="margin-top:0; color:var(--info);">📦 Añadir Productos al Carrito</h3>
+                
+                <div class="form-grid" style="align-items: flex-end;">
+                    <div class="form-group"><label>Producto</label><select id="ingreso-producto" onchange="calcTotal('ingreso')"></select></div>
+                    <div class="form-group"><label>Cantidad</label><input type="number" step="0.01" id="ingreso-cantidad" value="1"></div>
+                    <div class="form-group"><label>P. Unit (Bs.)</label><input type="number" step="0.01" id="ingreso-precio"></div>
+                    <button type="button" class="btn-submit" style="background-color:var(--info); height:46px;" onclick="agregarAlCarrito('ingreso')">➕ AGREGAR</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th>❌</th></tr></thead>
+                        <tbody id="carrito-ingreso-body"></tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:20px; padding:15px; background:#f8f9fa; border-radius:8px;">
+                    <h2 style="margin:0; color:var(--success); font-size:1.8rem;">TOTAL: Bs. <span id="ingreso-total-global">0.00</span></h2>
+                </div>
+
                 <button type="submit" id="btn-ingreso" class="btn-submit ingreso">📥 PROCESAR COMPRA</button>
-                <button type="button" onclick="cancelarEdicion('ingresos')" style="display:none; margin-top:10px; width:100%; padding:12px; border-radius:8px; border:none; cursor:pointer; background:#eee;">❌ Cancelar Edición</button>
+                <button type="button" onclick="cancelarEdicionTrans('ingresos')" style="display:none; margin-top:10px; width:100%; padding:12px; border-radius:8px; border:none; cursor:pointer; background:#eee;">❌ Cancelar Edición / Limpiar</button>
             </form>
             <h3>📜 Historial de Compras Recientes</h3>
-            <div class="table-responsive"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Acciones</th></tr></thead><tbody id="table-ingresos"></tbody></table></div>
+            <div class="table-responsive"><table><thead><tr><th>N°</th><th>Fecha</th><th>Proveedor</th><th>Productos</th><th>Total</th><th>Pago</th><th>Acciones</th></tr></thead><tbody id="table-ingresos"></tbody></table></div>
         </main>
 
         <!-- PANEL: REPORTES SEPARADOS -->
@@ -309,7 +346,7 @@
             </div>
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th></tr></thead>
+                    <thead><tr><th>N° Comp.</th><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Cant. (Items)</th><th>Total</th><th>Pago</th></tr></thead>
                     <tbody id="table-reporte-ventas"></tbody>
                 </table>
             </div>
@@ -323,7 +360,7 @@
             </div>
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>Fecha</th><th>Proveedor</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th></tr></thead>
+                    <thead><tr><th>N° Comp.</th><th>Fecha</th><th>Proveedor</th><th>Productos</th><th>Cant. (Items)</th><th>Total</th><th>Pago</th></tr></thead>
                     <tbody id="table-reporte-compras"></tbody>
                 </table>
             </div>
@@ -415,15 +452,14 @@
         const database = firebase.database();
 
         // BASE DE DATOS LOCAL
-        let db = {
-            config: { name: 'MI EMPRESA', logo: '' },
-            usuarios: [{ id: '1', user: 'admin', pass: '1234' }],
-            productos: [], clientes: [], proveedores: [], ingresos: [], salidas: []
-        };
+        let db = { config: { name: 'MI EMPRESA', logo: '' }, usuarios: [{ id: '1', user: 'admin', pass: '1234' }], productos: [], clientes: [], proveedores: [], ingresos: [], salidas: [] };
         
-        let reportDataVentas = []; 
-        let reportDataCompras = []; 
-        let pendingTransaccion = null; // Para guardar temporalmente antes de aceptar
+        let reportDataVentas = []; let reportDataCompras = []; 
+        let pendingTransaccion = null; 
+        
+        // Carritos multiproducto
+        let cartSalida = [];
+        let cartIngreso = [];
 
         // ASIGNACIÓN AUTOMÁTICA DE FECHA ACTUAL
         function setDefaultDates() {
@@ -432,14 +468,12 @@
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             const fechaActual = `${yyyy}-${mm}-${dd}`;
-
             document.getElementById('salida-fecha').value = fechaActual;
             document.getElementById('ingreso-fecha').value = fechaActual;
             document.getElementById('filtro-desde').value = fechaActual;
             document.getElementById('filtro-hasta').value = fechaActual;
         }
 
-        // Ejecutar al cargar la página
         setDefaultDates();
 
         // ==========================================
@@ -449,15 +483,10 @@
             const u = document.getElementById('login-user').value.trim();
             const p = document.getElementById('login-pass').value.trim();
             
-            if(u === 'admin' && p === '1234') {
-                document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-content').style.display = 'block'; showPanel('panel-salidas'); return;
-            }
+            if(u === 'admin' && p === '1234') { document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-content').style.display = 'block'; showPanel('panel-salidas'); return; }
             const esValido = db.usuarios && db.usuarios.find(usuario => usuario.user === u && usuario.pass === p);
-            if(esValido) {
-                document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-content').style.display = 'block'; showPanel('panel-salidas');
-            } else {
-                document.getElementById('login-error').style.display = 'block';
-            }
+            if(esValido) { document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-content').style.display = 'block'; showPanel('panel-salidas'); } 
+            else { document.getElementById('login-error').style.display = 'block'; }
         }
 
         // ==========================================
@@ -475,151 +504,122 @@
         });
 
         function guardarEnNube() { database.ref('sistema_inventario').set(db); }
-
-        function showPanel(panelId) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            if(panelId) document.getElementById(panelId).classList.add('active');
-        }
-        function showToast(msg) {
-            const t = document.getElementById("toast"); t.textContent = msg; t.className = "show";
-            setTimeout(() => t.className = t.className.replace("show", ""), 3000);
-        }
+        function showPanel(panelId) { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); if(panelId) document.getElementById(panelId).classList.add('active'); }
+        function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.className = "show"; setTimeout(() => t.className = t.className.replace("show", ""), 3000); }
 
         // ==========================================
         // CONFIGURACIÓN Y USUARIOS
         // ==========================================
-        function loadConfig() {
-            document.getElementById('app-name').textContent = db.config.name; document.getElementById('config-name').value = db.config.name;
-            const logo = document.getElementById('app-logo');
-            if (db.config.logo) { logo.src = db.config.logo; logo.style.display = 'block'; }
-        }
-        function saveConfig() {
-            db.config.name = document.getElementById('config-name').value.trim() || 'MI EMPRESA';
-            const file = document.getElementById('config-logo').files[0];
-            if (file) {
-                const reader = new FileReader(); reader.onload = e => { db.config.logo = e.target.result; guardarEnNube(); showToast("✅ Datos Guardados"); }; reader.readAsDataURL(file);
-            } else { guardarEnNube(); showToast("✅ Datos Guardados"); }
-        }
-
-        // FUNCIONES DE USUARIO
-        function saveUsuario(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-user-id').value;
-            const u = document.getElementById('new-user').value.trim();
-            const p = document.getElementById('new-pass').value.trim();
-            
-            if(id) { 
-                const index = db.usuarios.findIndex(user => user.id === id);
-                if(index >= 0) { db.usuarios[index].user = u; db.usuarios[index].pass = p; }
-            } else { 
-                db.usuarios.push({ id: Date.now().toString(), user: u, pass: p });
-            }
-            guardarEnNube(); cancelarEdicionUsuario(); showToast(id ? "✅ Usuario Actualizado" : "✅ Usuario Agregado");
-        }
-
-        function editarUsuario(id) {
-            const u = db.usuarios.find(user => user.id === id); if(!u) return;
-            document.getElementById('edit-user-id').value = u.id; document.getElementById('new-user').value = u.user; document.getElementById('new-pass').value = u.pass;
-            
-            const btn = document.getElementById('btn-save-user');
-            btn.innerText = "✏️ ACTUALIZAR USUARIO"; btn.classList.add('edit-mode');
-            document.getElementById('btn-cancel-user').style.display = "block";
-            window.scrollTo(0, document.getElementById('form-usuario').offsetTop);
-        }
-
-        function cancelarEdicionUsuario() {
-            document.getElementById('form-usuario').reset(); document.getElementById('edit-user-id').value = "";
-            const btn = document.getElementById('btn-save-user');
-            btn.innerText = "➕ AGREGAR USUARIO"; btn.classList.remove('edit-mode');
-            document.getElementById('btn-cancel-user').style.display = "none";
-        }
-
-        function deleteUsuario(id) {
-            if(confirm("¿Seguro que deseas eliminar a este usuario? Ya no podrá entrar al sistema.")) {
-                db.usuarios = db.usuarios.filter(u => u.id !== id); guardarEnNube(); showToast("🗑️ Usuario eliminado");
-            }
-        }
-
-        function renderUsuarios() {
-            document.getElementById('table-usuarios').innerHTML = (db.usuarios||[]).map(u => `<tr><td><b>${u.user}</b></td><td>${u.pass}</td><td width="100" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarUsuario('${u.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteUsuario('${u.id}')">🗑️</button></td></tr>`).join('');
-        }
+        function loadConfig() { document.getElementById('app-name').textContent = db.config.name; document.getElementById('config-name').value = db.config.name; const logo = document.getElementById('app-logo'); if (db.config.logo) { logo.src = db.config.logo; logo.style.display = 'block'; } }
+        function saveConfig() { db.config.name = document.getElementById('config-name').value.trim() || 'MI EMPRESA'; const file = document.getElementById('config-logo').files[0]; if (file) { const reader = new FileReader(); reader.onload = e => { db.config.logo = e.target.result; guardarEnNube(); showToast("✅ Datos Guardados"); }; reader.readAsDataURL(file); } else { guardarEnNube(); showToast("✅ Datos Guardados"); } }
+        function saveUsuario(e) { e.preventDefault(); const id = document.getElementById('edit-user-id').value; const u = document.getElementById('new-user').value.trim(); const p = document.getElementById('new-pass').value.trim(); if(id) { const index = db.usuarios.findIndex(user => user.id === id); if(index >= 0) { db.usuarios[index].user = u; db.usuarios[index].pass = p; } } else { db.usuarios.push({ id: Date.now().toString(), user: u, pass: p }); } guardarEnNube(); cancelarEdicionUsuario(); showToast(id ? "✅ Usuario Actualizado" : "✅ Usuario Agregado"); }
+        function editarUsuario(id) { const u = db.usuarios.find(user => user.id === id); if(!u) return; document.getElementById('edit-user-id').value = u.id; document.getElementById('new-user').value = u.user; document.getElementById('new-pass').value = u.pass; const btn = document.getElementById('btn-save-user'); btn.innerText = "✏️ ACTUALIZAR USUARIO"; btn.classList.add('edit-mode'); document.getElementById('btn-cancel-user').style.display = "block"; window.scrollTo(0, document.getElementById('form-usuario').offsetTop); }
+        function cancelarEdicionUsuario() { document.getElementById('form-usuario').reset(); document.getElementById('edit-user-id').value = ""; const btn = document.getElementById('btn-save-user'); btn.innerText = "➕ AGREGAR USUARIO"; btn.classList.remove('edit-mode'); document.getElementById('btn-cancel-user').style.display = "none"; }
+        function deleteUsuario(id) { if(confirm("¿Seguro que deseas eliminar a este usuario?")) { db.usuarios = db.usuarios.filter(u => u.id !== id); guardarEnNube(); showToast("🗑️ Usuario eliminado"); } }
+        function renderUsuarios() { document.getElementById('table-usuarios').innerHTML = (db.usuarios||[]).map(u => `<tr><td><b>${u.user}</b></td><td>${u.pass}</td><td width="100" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarUsuario('${u.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteUsuario('${u.id}')">🗑️</button></td></tr>`).join(''); }
 
         // ==========================================
         // CATÁLOGOS CON EDICIÓN
         // ==========================================
-        function saveCatalogo(e, tipo) {
-            e.preventDefault(); let id = ""; let obj = {};
-            if(tipo === 'productos') {
-                id = document.getElementById('cat-prod-id').value || Date.now().toString();
-                obj = { id, nombre: document.getElementById('cat-prod-nombre').value.trim().toUpperCase(), unidad: document.getElementById('cat-prod-unidad').value, compra: parseFloat(document.getElementById('cat-prod-compra').value), venta: parseFloat(document.getElementById('cat-prod-venta').value) };
-            } else if(tipo === 'clientes') {
-                id = document.getElementById('cat-cli-id').value || Date.now().toString();
-                obj = { id, nombre: document.getElementById('cat-cli-nombre').value.trim().toUpperCase(), tel: document.getElementById('cat-cli-tel').value.trim() };
-            } else if(tipo === 'proveedores') {
-                id = document.getElementById('cat-prov-id').value || Date.now().toString();
-                obj = { id, nombre: document.getElementById('cat-prov-nombre').value.trim().toUpperCase(), tel: document.getElementById('cat-prov-tel').value.trim() };
-            }
-            const index = db[tipo].findIndex(item => item.id === id); if(index >= 0) db[tipo][index] = obj; else db[tipo].push(obj);
-            guardarEnNube(); e.target.reset(); cancelarEdicion(tipo); showToast(`✅ Guardado Exitoso`);
-        }
-
-        function editarCat(tipo, id) {
-            const item = db[tipo].find(i => i.id === id); if(!item) return;
-            if(tipo === 'productos') {
-                document.getElementById('cat-prod-id').value = item.id; document.getElementById('cat-prod-nombre').value = item.nombre; document.getElementById('cat-prod-unidad').value = item.unidad; document.getElementById('cat-prod-compra').value = item.compra; document.getElementById('cat-prod-venta').value = item.venta;
-                document.getElementById('btn-prod').innerText = "✏️ Actualizar"; document.getElementById('btn-prod').classList.add('edit-mode'); document.getElementById('btn-prod').nextElementSibling.style.display = "block";
-            } else if (tipo === 'clientes') {
-                document.getElementById('cat-cli-id').value = item.id; document.getElementById('cat-cli-nombre').value = item.nombre; document.getElementById('cat-cli-tel').value = item.tel;
-                document.getElementById('btn-cli').innerText = "✏️ Actualizar"; document.getElementById('btn-cli').classList.add('edit-mode'); document.getElementById('btn-cli').nextElementSibling.style.display = "block";
-            } else if (tipo === 'proveedores') {
-                document.getElementById('cat-prov-id').value = item.id; document.getElementById('cat-prov-nombre').value = item.nombre; document.getElementById('cat-prov-tel').value = item.tel;
-                document.getElementById('btn-prov').innerText = "✏️ Actualizar"; document.getElementById('btn-prov').classList.add('edit-mode'); document.getElementById('btn-prov').nextElementSibling.style.display = "block";
-            }
-        }
-
-        function cancelarEdicion(tipo) {
-            if(tipo==='productos') { document.getElementById('form-producto').reset(); document.getElementById('cat-prod-id').value = ""; document.getElementById('btn-prod').innerText = "➕ Guardar Producto"; document.getElementById('btn-prod').classList.remove('edit-mode'); document.getElementById('btn-prod').nextElementSibling.style.display = "none"; }
-            if(tipo==='clientes') { document.getElementById('form-cliente').reset(); document.getElementById('cat-cli-id').value = ""; document.getElementById('btn-cli').innerText = "➕ Guardar Cliente"; document.getElementById('btn-cli').classList.remove('edit-mode'); document.getElementById('btn-cli').nextElementSibling.style.display = "none"; }
-            if(tipo==='proveedores') { document.getElementById('form-proveedor').reset(); document.getElementById('cat-prov-id').value = ""; document.getElementById('btn-prov').innerText = "➕ Guardar Proveedor"; document.getElementById('btn-prov').classList.remove('edit-mode'); document.getElementById('btn-prov').nextElementSibling.style.display = "none"; }
-            if(tipo==='salidas') { document.getElementById('form-salida').reset(); document.getElementById('salida-id').value = ""; document.getElementById('btn-salida').innerText = "📤 PROCESAR VENTA"; document.getElementById('btn-salida').classList.remove('edit-mode'); document.getElementById('btn-salida').nextElementSibling.style.display = "none"; setDefaultDates(); }
-            if(tipo==='ingresos') { document.getElementById('form-ingreso').reset(); document.getElementById('ingreso-id').value = ""; document.getElementById('btn-ingreso').innerText = "📥 PROCESAR COMPRA"; document.getElementById('btn-ingreso').classList.remove('edit-mode'); document.getElementById('btn-ingreso').nextElementSibling.style.display = "none"; setDefaultDates();}
-        }
-
-        function renderCatalogos() {
-            document.getElementById('table-cat-productos').innerHTML = (db.productos||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>${p.unidad} | Compra: Bs.${p.compra} | Venta: Bs.${p.venta}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('productos','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('productos','${p.id}')">🗑️</button></td></tr>`).join('');
-            document.getElementById('table-cat-clientes').innerHTML = (db.clientes||[]).map(c => `<tr><td><b>${c.nombre}</b><br><small>Tel: ${c.tel||'N/A'}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('clientes','${c.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('clientes','${c.id}')">🗑️</button></td></tr>`).join('');
-            document.getElementById('table-cat-proveedores').innerHTML = (db.proveedores||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>Tel: ${p.tel||'N/A'}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('proveedores','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('proveedores','${p.id}')">🗑️</button></td></tr>`).join('');
-        }
+        function saveCatalogo(e, tipo) { e.preventDefault(); let id = ""; let obj = {}; if(tipo === 'productos') { id = document.getElementById('cat-prod-id').value || Date.now().toString(); obj = { id, nombre: document.getElementById('cat-prod-nombre').value.trim().toUpperCase(), unidad: document.getElementById('cat-prod-unidad').value, compra: parseFloat(document.getElementById('cat-prod-compra').value), venta: parseFloat(document.getElementById('cat-prod-venta').value) }; } else if(tipo === 'clientes') { id = document.getElementById('cat-cli-id').value || Date.now().toString(); obj = { id, nombre: document.getElementById('cat-cli-nombre').value.trim().toUpperCase(), tel: document.getElementById('cat-cli-tel').value.trim() }; } else if(tipo === 'proveedores') { id = document.getElementById('cat-prov-id').value || Date.now().toString(); obj = { id, nombre: document.getElementById('cat-prov-nombre').value.trim().toUpperCase(), tel: document.getElementById('cat-prov-tel').value.trim() }; } const index = db[tipo].findIndex(item => item.id === id); if(index >= 0) db[tipo][index] = obj; else db[tipo].push(obj); guardarEnNube(); e.target.reset(); cancelarEdicionCat(tipo); showToast(`✅ Guardado Exitoso`); }
+        function editarCat(tipo, id) { const item = db[tipo].find(i => i.id === id); if(!item) return; if(tipo === 'productos') { document.getElementById('cat-prod-id').value = item.id; document.getElementById('cat-prod-nombre').value = item.nombre; document.getElementById('cat-prod-unidad').value = item.unidad; document.getElementById('cat-prod-compra').value = item.compra; document.getElementById('cat-prod-venta').value = item.venta; document.getElementById('btn-prod').innerText = "✏️ Actualizar"; document.getElementById('btn-prod').classList.add('edit-mode'); document.getElementById('btn-prod').nextElementSibling.style.display = "block"; } else if (tipo === 'clientes') { document.getElementById('cat-cli-id').value = item.id; document.getElementById('cat-cli-nombre').value = item.nombre; document.getElementById('cat-cli-tel').value = item.tel; document.getElementById('btn-cli').innerText = "✏️ Actualizar"; document.getElementById('btn-cli').classList.add('edit-mode'); document.getElementById('btn-cli').nextElementSibling.style.display = "block"; } else if (tipo === 'proveedores') { document.getElementById('cat-prov-id').value = item.id; document.getElementById('cat-prov-nombre').value = item.nombre; document.getElementById('cat-prov-tel').value = item.tel; document.getElementById('btn-prov').innerText = "✏️ Actualizar"; document.getElementById('btn-prov').classList.add('edit-mode'); document.getElementById('btn-prov').nextElementSibling.style.display = "block"; } }
+        function cancelarEdicionCat(tipo) { if(tipo==='productos') { document.getElementById('form-producto').reset(); document.getElementById('cat-prod-id').value = ""; document.getElementById('btn-prod').innerText = "➕ Guardar Producto"; document.getElementById('btn-prod').classList.remove('edit-mode'); document.getElementById('btn-prod').nextElementSibling.style.display = "none"; } if(tipo==='clientes') { document.getElementById('form-cliente').reset(); document.getElementById('cat-cli-id').value = ""; document.getElementById('btn-cli').innerText = "➕ Guardar Cliente"; document.getElementById('btn-cli').classList.remove('edit-mode'); document.getElementById('btn-cli').nextElementSibling.style.display = "none"; } if(tipo==='proveedores') { document.getElementById('form-proveedor').reset(); document.getElementById('cat-prov-id').value = ""; document.getElementById('btn-prov').innerText = "➕ Guardar Proveedor"; document.getElementById('btn-prov').classList.remove('edit-mode'); document.getElementById('btn-prov').nextElementSibling.style.display = "none"; } }
+        function renderCatalogos() { document.getElementById('table-cat-productos').innerHTML = (db.productos||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>${p.unidad} | Compra: Bs.${p.compra} | Venta: Bs.${p.venta}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('productos','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('productos','${p.id}')">🗑️</button></td></tr>`).join(''); document.getElementById('table-cat-clientes').innerHTML = (db.clientes||[]).map(c => `<tr><td><b>${c.nombre}</b><br><small>Tel: ${c.tel||'N/A'}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('clientes','${c.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('clientes','${c.id}')">🗑️</button></td></tr>`).join(''); document.getElementById('table-cat-proveedores').innerHTML = (db.proveedores||[]).map(p => `<tr><td><b>${p.nombre}</b><br><small>Tel: ${p.tel||'N/A'}</small></td><td width="90" class="acciones-td"><button class="btn-action-sm btn-edit" onclick="editarCat('proveedores','${p.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('proveedores','${p.id}')">🗑️</button></td></tr>`).join(''); }
 
         // ==========================================
-        // VENTAS Y COMPRAS CON VISTA PREVIA
+        // CARRITO MULTIPRODUCTO
         // ==========================================
         function calcTotal(tipo) {
-            const prod = (db.productos||[]).find(p => p.id === document.getElementById(`${tipo}-producto`).value);
-            const cant = parseFloat(document.getElementById(`${tipo}-cantidad`).value) || 0;
+            const prodId = document.getElementById(`${tipo}-producto`).value;
+            const prod = (db.productos||[]).find(p => p.id === prodId);
             let precioInput = document.getElementById(`${tipo}-precio`);
-            
-            if(prod && !document.getElementById(`${tipo}-id`).value && document.activeElement.id === `${tipo}-producto`) {
+            if(prod && document.activeElement.id === `${tipo}-producto`) {
                 precioInput.value = tipo === 'salida' ? prod.venta : prod.compra;
             }
-            const precio = parseFloat(precioInput.value) || 0; document.getElementById(`${tipo}-total`).value = (precio * cant).toFixed(2);
         }
 
-        // Preparar datos y mostrar el voucher previo
+        function agregarAlCarrito(tipo) {
+            const prodId = document.getElementById(`${tipo}-producto`).value;
+            if(!prodId) return alert("Selecciona un producto para agregarlo.");
+            
+            const cant = parseFloat(document.getElementById(`${tipo}-cantidad`).value) || 1;
+            const precio = parseFloat(document.getElementById(`${tipo}-precio`).value) || 0;
+            const subtotal = cant * precio;
+            const prodName = getProdName(prodId);
+            const prodUnit = getProdUnit(prodId);
+            
+            let cart = tipo === 'salida' ? cartSalida : cartIngreso;
+            cart.push({ prodId, prodName, prodUnit, cant, precio, subtotal });
+            
+            // Limpiar inputs
+            document.getElementById(`${tipo}-producto`).value = '';
+            document.getElementById(`${tipo}-cantidad`).value = '1';
+            document.getElementById(`${tipo}-precio`).value = '';
+
+            renderCarrito(tipo);
+        }
+
+        function renderCarrito(tipo) {
+            const cart = tipo === 'salida' ? cartSalida : cartIngreso;
+            const tbody = document.getElementById(`carrito-${tipo}-body`);
+            let html = '';
+            let totalGlobal = 0;
+
+            cart.forEach((item, index) => {
+                html += `<tr>
+                    <td><b>${item.prodName}</b></td>
+                    <td>${item.cant}</td>
+                    <td>Bs.${item.precio.toFixed(2)}</td>
+                    <td>Bs.${item.subtotal.toFixed(2)}</td>
+                    <td><button type="button" onclick="quitarDelCarrito('${tipo}', ${index})" style="background:var(--danger); color:white; border:none; border-radius:4px; cursor:pointer; padding:5px 10px;">❌</button></td>
+                </tr>`;
+                totalGlobal += item.subtotal;
+            });
+            tbody.innerHTML = html;
+            document.getElementById(`${tipo}-total-global`).textContent = totalGlobal.toFixed(2);
+        }
+
+        function quitarDelCarrito(tipo, index) {
+            if(tipo === 'salida') cartSalida.splice(index, 1);
+            else cartIngreso.splice(index, 1);
+            renderCarrito(tipo);
+        }
+
+        function cancelarEdicionTrans(tipo) {
+            document.getElementById(`form-${tipo}`).reset(); 
+            document.getElementById(`${tipo}-id`).value = ""; 
+            if(tipo === 'salidas') cartSalida = []; else cartIngreso = [];
+            renderCarrito(tipo);
+            
+            const btn = document.getElementById(`btn-${tipo}`);
+            btn.innerText = tipo === 'salidas' ? "📤 PROCESAR VENTA" : "📥 PROCESAR COMPRA"; 
+            btn.classList.remove('edit-mode'); 
+            btn.nextElementSibling.style.display = "none"; 
+            setDefaultDates(); 
+        }
+
+        // ==========================================
+        // PROCESAR TRANSACCIONES Y VISTA PREVIA
+        // ==========================================
         function prepararTransaccion(e, tipo) {
             e.preventDefault();
             const esSalida = tipo === 'salidas'; const prefix = esSalida ? 'salida' : 'ingreso';
-            const prodId = document.getElementById(`${prefix}-producto`).value; 
-            if(!prodId) return alert("Selecciona un producto");
+            const cart = esSalida ? cartSalida : cartIngreso;
+            
+            if(cart.length === 0) return alert("⚠️ El carrito está vacío. Agrega al menos un producto.");
 
             const id = document.getElementById(`${prefix}-id`).value || Date.now().toString();
+            // Generar N° correlativo secuencial
+            const maxNum = (db[tipo]||[]).reduce((max, item) => Math.max(max, item.num || 0), 0);
+            const num = (document.getElementById(`${prefix}-id`).value !== "") ? (db[tipo].find(i=>i.id===id).num) : (maxNum + 1);
+            
+            const total = parseFloat(document.getElementById(`${prefix}-total-global`).textContent);
+
             const obj = { 
-                id, 
+                id, num,
                 fecha: document.getElementById(`${prefix}-fecha`).value, 
-                prodId, 
-                cant: parseFloat(document.getElementById(`${prefix}-cantidad`).value), 
-                precio: parseFloat(document.getElementById(`${prefix}-precio`).value), 
-                total: parseFloat(document.getElementById(`${prefix}-total`).value), 
+                detalles: [...cart], 
+                total: total, 
                 pago: document.getElementById(`${prefix}-pago`).value, 
             };
 
@@ -633,26 +633,30 @@
 
             pendingTransaccion = { tipo, data: obj };
 
-            // Generar HTML de la Vista Previa
+            // Generar HTML de la Vista Previa (Multiproducto)
             const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
             const nombreColumna = esSalida ? 'Cliente' : 'Proveedor';
             const nombreEntidad = esSalida ? getCliName(obj.cliId) : getProvName(obj.provId);
-            const nombreProd = getProdName(obj.prodId);
-            const unidadProd = getProdUnit(obj.prodId);
+
+            let rowsHtml = '';
+            obj.detalles.forEach(d => {
+                rowsHtml += `<p style="margin:3px 0; font-size:12px; display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:3px;"><span>${d.cant}x ${d.prodName}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
+            });
 
             const previewHtml = `
                 <div style="text-align:center; margin-bottom:10px;">
                     <h3 style="margin:0; font-size:16px;">${db.config.name}</h3>
-                    <p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p>
+                    <p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${obj.num.toString().padStart(4, '0')}</p>
                     <p style="margin:0; font-size:10px;">Fecha: ${obj.fecha}</p>
                 </div>
                 <hr style="border-top:1px dashed black; margin:5px 0;">
                 <p style="margin:3px 0; font-size:12px;"><strong>${nombreColumna}:</strong><br>${nombreEntidad}</p>
                 <hr style="border-top:1px dashed black; margin:5px 0;">
-                <p style="margin:3px 0; font-size:12px;"><strong>Producto:</strong><br>${nombreProd}</p>
-                <p style="margin:3px 0; font-size:12px;"><strong>Cantidad:</strong> ${obj.cant} ${unidadProd}</p>
-                <p style="margin:3px 0; font-size:12px;"><strong>Precio Unit.:</strong> Bs.${obj.precio.toFixed(2)}</p>
-                <h4 style="margin:5px 0; text-align:right;">Total: Bs.${obj.total.toFixed(2)}</h4>
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold; color:#555;"><span>Cant | Producto</span><span>Subtotal</span></div>
+                <hr style="border-top:1px dashed black; margin:5px 0;">
+                ${rowsHtml}
+                <hr style="border-top:1px dashed black; margin:5px 0;">
+                <h3 style="margin:10px 0; text-align:right;">TOTAL: Bs.${obj.total.toFixed(2)}</h3>
                 <p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${obj.pago}</p>
             `;
             
@@ -660,7 +664,6 @@
             document.getElementById('modal-preview').style.display = 'flex';
         }
 
-        // Si el usuario acepta, se guarda y se imprime
         function confirmarTransaccion() {
             if(!pendingTransaccion) return;
             const { tipo, data } = pendingTransaccion;
@@ -669,22 +672,19 @@
             if(index >= 0) db[tipo][index] = data; else db[tipo].push(data);
             
             guardarEnNube(); 
-            cancelarEdicion(tipo); 
+            cancelarEdicionTrans(tipo); 
             document.getElementById('modal-preview').style.display = 'none';
-            showToast("✅ Movimiento Registrado con Éxito");
+            showToast("✅ Transacción Confirmada");
             
-            // Mandamos a imprimir automáticamente el ticket 80mm
             printComprobanteUnico(tipo, data.id);
             pendingTransaccion = null;
         }
 
-        // Si el usuario cancela, se anula la venta/compra
         function cerrarPreview() {
             if(!pendingTransaccion) return;
             const { tipo } = pendingTransaccion;
-            
             document.getElementById('modal-preview').style.display = 'none';
-            cancelarEdicion(tipo); // Esto limpia todos los campos (anulando la venta)
+            cancelarEdicionTrans(tipo);
             pendingTransaccion = null;
             showToast("❌ Operación Cancelada");
         }
@@ -693,25 +693,45 @@
             const item = db[tipo].find(i => i.id === id); if(!item) return;
             const esSalida = tipo === 'salidas'; const prefix = esSalida ? 'salida' : 'ingreso';
             
-            document.getElementById(`${prefix}-id`).value = item.id; document.getElementById(`${prefix}-fecha`).value = item.fecha; document.getElementById(`${prefix}-producto`).value = item.prodId; document.getElementById(`${prefix}-cantidad`).value = item.cant; document.getElementById(`${prefix}-precio`).value = item.precio; document.getElementById(`${prefix}-total`).value = item.total; document.getElementById(`${prefix}-pago`).value = item.pago;
+            document.getElementById(`${prefix}-id`).value = item.id; 
+            document.getElementById(`${prefix}-fecha`).value = item.fecha; 
+            document.getElementById(`${prefix}-pago`).value = item.pago;
             if(esSalida) { document.getElementById('salida-cliente').value = item.cliId; document.getElementById('salida-motivo').value = item.motivo; } else { document.getElementById('ingreso-proveedor').value = item.provId; document.getElementById('ingreso-obs').value = item.obs; }
+            
+            // Cargar productos al carrito (Soporte para datos antiguos de 1 producto y nuevos multiproductos)
+            if(item.detalles) {
+                if(esSalida) cartSalida = [...item.detalles]; else cartIngreso = [...item.detalles];
+            } else {
+                // Adaptar registro antiguo a la nueva estructura de carrito
+                const prodLegacy = { prodId: item.prodId, prodName: getProdName(item.prodId), prodUnit: getProdUnit(item.prodId), cant: item.cant, precio: item.precio, subtotal: item.total };
+                if(esSalida) cartSalida = [prodLegacy]; else cartIngreso = [prodLegacy];
+            }
+            renderCarrito(tipo);
+
             const btn = document.getElementById(`btn-${prefix}`); btn.innerText = "✏️ ACTUALIZAR REGISTRO"; btn.classList.add('edit-mode'); btn.nextElementSibling.style.display = "block"; window.scrollTo(0,0);
         }
 
-        function deleteReg(type, id) {
-            if(confirm("⚠️ ¿Seguro que deseas eliminar este registro?")) { db[type] = db[type].filter(i => i.id !== id); guardarEnNube(); showToast("🗑️ Eliminado"); }
+        function deleteReg(type, id) { if(confirm("⚠️ ¿Seguro que deseas eliminar este registro?")) { db[type] = db[type].filter(i => i.id !== id); guardarEnNube(); showToast("🗑️ Eliminado"); } }
+
+        function formatNombresProductos(item) {
+            if(item.detalles) {
+                if(item.detalles.length === 1) return item.detalles[0].prodName;
+                return `Varios (${item.detalles.length} items)`;
+            }
+            return getProdName(item.prodId); // Soporte datos viejos
         }
 
         function renderTransacciones() {
-            document.getElementById('table-salidas').innerHTML = (db.salidas||[]).slice().reverse().map(item => `<tr><td>${item.fecha}</td><td>${getCliName(item.cliId)}</td><td><b>${getProdName(item.prodId)}</b></td><td>${item.cant}</td><td style="color:var(--danger); font-weight:bold;">Bs.${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('salidas', ${item.id})">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('salidas', ${item.id})">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('salidas', ${item.id})">🗑️</button></td></tr>`).join('');
-            document.getElementById('table-ingresos').innerHTML = (db.ingresos||[]).slice().reverse().map(item => `<tr><td>${item.fecha}</td><td>${getProvName(item.provId)}</td><td><b>${getProdName(item.prodId)}</b></td><td>${item.cant}</td><td style="color:var(--success); font-weight:bold;">Bs.${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('ingresos', ${item.id})">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('ingresos', ${item.id})">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('ingresos', ${item.id})">🗑️</button></td></tr>`).join('');
+            document.getElementById('table-salidas').innerHTML = (db.salidas||[]).slice().reverse().map(item => `<tr><td><b>#${(item.num||0).toString().padStart(4, '0')}</b></td><td>${item.fecha}</td><td>${getCliName(item.cliId)}</td><td>${formatNombresProductos(item)}</td><td style="color:var(--danger); font-weight:bold;">Bs.${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('salidas', '${item.id}')">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('salidas', '${item.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('salidas', '${item.id}')">🗑️</button></td></tr>`).join('');
+            document.getElementById('table-ingresos').innerHTML = (db.ingresos||[]).slice().reverse().map(item => `<tr><td><b>#${(item.num||0).toString().padStart(4, '0')}</b></td><td>${item.fecha}</td><td>${getProvName(item.provId)}</td><td>${formatNombresProductos(item)}</td><td style="color:var(--success); font-weight:bold;">Bs.${item.total.toFixed(2)}</td><td><span class="badge ${item.pago==='Contado'?'badge-contado':'badge-credito'}">${item.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-print" onclick="printComprobanteUnico('ingresos', '${item.id}')">🖨️</button><button class="btn-action-sm btn-edit" onclick="editarTrans('ingresos', '${item.id}')">✏️</button><button class="btn-action-sm btn-delete" onclick="deleteReg('ingresos', '${item.id}')">🗑️</button></td></tr>`).join('');
         }
 
         // --- UTILIDADES ---
         function actualizarSelects() {
-            const mapOpt = (arr) => `<option value="">-- Seleccione una opción --</option>` + (arr||[]).map(item => `<option value="${item.id}">${item.nombre}</option>`).join('');
+            const mapOpt = (arr) => `<option value="">-- Seleccione un producto --</option>` + (arr||[]).map(item => `<option value="${item.id}">${item.nombre}</option>`).join('');
             document.getElementById('salida-producto').innerHTML = mapOpt(db.productos); document.getElementById('ingreso-producto').innerHTML = mapOpt(db.productos);
-            document.getElementById('salida-cliente').innerHTML = mapOpt(db.clientes); document.getElementById('ingreso-proveedor').innerHTML = mapOpt(db.proveedores);
+            document.getElementById('salida-cliente').innerHTML = `<option value="">-- Seleccione Cliente --</option>` + (db.clientes||[]).map(item => `<option value="${item.id}">${item.nombre}</option>`).join(''); 
+            document.getElementById('ingreso-proveedor').innerHTML = `<option value="">-- Seleccione Proveedor --</option>` + (db.proveedores||[]).map(item => `<option value="${item.id}">${item.nombre}</option>`).join('');
         }
         function getProdName(id) { const p = (db.productos||[]).find(x => x.id === id); return p ? p.nombre : 'Desconocido'; }
         function getProdUnit(id) { const p = (db.productos||[]).find(x => x.id === id); return p ? p.unidad : 'U'; }
@@ -721,9 +741,7 @@
         // ==========================================
         // REPORTES SEPARADOS Y FILTROS
         // ==========================================
-        function prepararFiltros() {
-            // Se quitó filtro entidad del diseño global para simplificar
-        }
+        function prepararFiltros() {}
 
         function generarReporte() {
             const fDesde = document.getElementById('filtro-desde').value;
@@ -733,31 +751,25 @@
             let arrVentas = [...(db.salidas||[])];
             let arrCompras = [...(db.ingresos||[])];
 
-            // Aplicar Filtros Globales
             if(fDesde) { arrVentas = arrVentas.filter(x => x.fecha >= fDesde); arrCompras = arrCompras.filter(x => x.fecha >= fDesde); }
             if(fHasta) { arrVentas = arrVentas.filter(x => x.fecha <= fHasta); arrCompras = arrCompras.filter(x => x.fecha <= fHasta); }
             if(fPago !== "Todos") { arrVentas = arrVentas.filter(x => x.pago === fPago); arrCompras = arrCompras.filter(x => x.pago === fPago); }
             
-            // Construir Reportes Separados
-            reportDataVentas = arrVentas.map(v => ({ fecha: v.fecha, entidad: getCliName(v.cliId), prod: getProdName(v.prodId), cant: v.cant, total: v.total, pago: v.pago }));
-            reportDataCompras = arrCompras.map(c => ({ fecha: c.fecha, entidad: getProvName(c.provId), prod: getProdName(c.prodId), cant: c.cant, total: c.total, pago: c.pago }));
+            reportDataVentas = arrVentas.map(v => ({ num: v.num||0, fecha: v.fecha, entidad: getCliName(v.cliId), prod: formatNombresProductos(v), cant: v.detalles ? v.detalles.reduce((s,d)=>s+d.cant,0) : v.cant, total: v.total, pago: v.pago, raw: v }));
+            reportDataCompras = arrCompras.map(c => ({ num: c.num||0, fecha: c.fecha, entidad: getProvName(c.provId), prod: formatNombresProductos(c), cant: c.detalles ? c.detalles.reduce((s,d)=>s+d.cant,0) : c.cant, total: c.total, pago: c.pago, raw: c }));
             
-            reportDataVentas.sort((a,b) => a.fecha.localeCompare(b.fecha));
-            reportDataCompras.sort((a,b) => a.fecha.localeCompare(b.fecha));
+            reportDataVentas.sort((a,b) => a.fecha.localeCompare(b.fecha)); reportDataCompras.sort((a,b) => a.fecha.localeCompare(b.fecha));
 
-            const totalV = arrVentas.reduce((sum, item) => sum + item.total, 0);
-            const totalC = arrCompras.reduce((sum, item) => sum + item.total, 0);
-            document.getElementById('rep-ventas').textContent = 'Bs.' + totalV.toFixed(2);
-            document.getElementById('rep-compras').textContent = 'Bs.' + totalC.toFixed(2);
-            document.getElementById('rep-balance').textContent = 'Bs.' + (totalV - totalC).toFixed(2);
+            const totalV = arrVentas.reduce((sum, item) => sum + item.total, 0); const totalC = arrCompras.reduce((sum, item) => sum + item.total, 0);
+            document.getElementById('rep-ventas').textContent = 'Bs.' + totalV.toFixed(2); document.getElementById('rep-compras').textContent = 'Bs.' + totalC.toFixed(2); document.getElementById('rep-balance').textContent = 'Bs.' + (totalV - totalC).toFixed(2);
 
-            document.getElementById('table-reporte-ventas').innerHTML = reportDataVentas.map(d => `<tr><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
-            document.getElementById('table-reporte-compras').innerHTML = reportDataCompras.map(d => `<tr><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
+            document.getElementById('table-reporte-ventas').innerHTML = reportDataVentas.map(d => `<tr><td>N° ${d.num.toString().padStart(4,'0')}</td><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
+            document.getElementById('table-reporte-compras').innerHTML = reportDataCompras.map(d => `<tr><td>N° ${d.num.toString().padStart(4,'0')}</td><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td>${d.cant}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td></tr>`).join('');
 
-            // STOCK
+            // ACTUALIZACIÓN DE STOCK (SUMANDO PRODUCTOS MULTIPLES O SIMPLES)
             const stockMap = {}; (db.productos||[]).forEach(p => stockMap[p.id] = { nom: p.nombre, uni: p.unidad, in:0, out:0 });
-            (db.ingresos||[]).forEach(i => { if(stockMap[i.prodId]){ stockMap[i.prodId].in += i.cant; }});
-            (db.salidas||[]).forEach(s => { if(stockMap[s.prodId]){ stockMap[s.prodId].out += s.cant; }});
+            (db.ingresos||[]).forEach(i => { if(i.detalles) { i.detalles.forEach(d => { if(stockMap[d.prodId]) stockMap[d.prodId].in += d.cant; }); } else { if(stockMap[i.prodId]) stockMap[i.prodId].in += i.cant; }});
+            (db.salidas||[]).forEach(s => { if(s.detalles) { s.detalles.forEach(d => { if(stockMap[d.prodId]) stockMap[d.prodId].out += d.cant; }); } else { if(stockMap[s.prodId]) stockMap[s.prodId].out += s.cant; }});
             
             document.getElementById('table-reporte-stock').innerHTML = Object.values(stockMap).map(d => {
                 const stock = d.in - d.out; const col = stock <= 0 ? 'var(--danger)' : (stock > 0 ? 'var(--success)' : 'inherit');
@@ -778,47 +790,21 @@
 
             if (formato === 'ticket80') {
                 const area = document.getElementById('ticket-print-area');
-                let rowsHtml = dataToPrint.map(d => `<div style="display:flex; justify-content:space-between; margin-bottom:3px; font-size:11px;"><span>${d.fecha.substring(5)} | ${d.prod.substring(0,12)}</span><span>Bs.${d.total.toFixed(2)}</span></div>`).join('');
+                let rowsHtml = dataToPrint.map(d => `<div style="display:flex; justify-content:space-between; margin-bottom:3px; font-size:11px;"><span>#${d.num.toString().padStart(3,'0')} | ${d.fecha.substring(5)} | ${d.prod.substring(0,8)}</span><span>Bs.${d.total.toFixed(2)}</span></div>`).join('');
                 
                 area.innerHTML = `
-                    <div style="text-align:center; margin-bottom:10px;">
-                        <h3 style="margin:0; font-size:16px;">${db.config.name}</h3>
-                        <p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p>
-                    </div>
-                    <hr style="border-top:1px dashed black; margin:5px 0;">
-                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Fecha | Producto</span><span>Total</span></div>
-                    <hr style="border-top:1px dashed black; margin:5px 0;">
-                    ${rowsHtml}
-                    <hr style="border-top:1px dashed black; margin:5px 0;">
-                    <h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>
+                    <div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>N° | Fecha | Producto</span><span>Total</span></div><hr style="border-top:1px dashed black; margin:5px 0;">${rowsHtml}<hr style="border-top:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>
                 `;
-                document.body.classList.add('printing-ticket80');
-                window.print();
-                setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
+                document.body.classList.add('printing-ticket80'); window.print(); setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
             } 
             else if (formato === 'carta') {
                 const area = document.getElementById('carta-print-area');
-                let rowsHtml = dataToPrint.map(d => `<tr><td style="padding:10px; border:1px solid #ddd;">${d.fecha}</td><td style="padding:10px; border:1px solid #ddd;">${d.entidad}</td><td style="padding:10px; border:1px solid #ddd;">${d.prod}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${d.cant}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.total.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${d.pago}</td></tr>`).join('');
+                let rowsHtml = dataToPrint.map(d => `<tr><td style="padding:10px; border:1px solid #ddd;">N° ${d.num.toString().padStart(4,'0')}</td><td style="padding:10px; border:1px solid #ddd;">${d.fecha}</td><td style="padding:10px; border:1px solid #ddd;">${d.entidad}</td><td style="padding:10px; border:1px solid #ddd;">${d.prod}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${d.cant}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.total.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${d.pago}</td></tr>`).join('');
                 
                 area.innerHTML = `
-                    <div style="text-align:center; margin-bottom:30px;">
-                        <h1 style="margin:0;">${db.config.name}</h1>
-                        <h2 style="margin:5px 0; color:#555;">${titulo}</h2>
-                        <p>Fecha de emisión: ${new Date().toLocaleDateString()}</p>
-                    </div>
-                    <table style="width:100%; border-collapse: collapse; font-size:14px;">
-                        <thead style="background-color:#f4f4f4;">
-                            <tr><th style="padding:10px; border:1px solid #ddd; text-align:left;">Fecha</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">${nombreColumna}</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Producto</th><th style="padding:10px; border:1px solid #ddd;">Cantidad</th><th style="padding:10px; border:1px solid #ddd; text-align:right;">Total</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Tipo de Pago</th></tr>
-                        </thead>
-                        <tbody>${rowsHtml}</tbody>
-                    </table>
-                    <div style="margin-top:20px; text-align:right;">
-                        <h2>Total General: Bs.${totalGeneral.toFixed(2)}</h2>
-                    </div>
+                    <div style="text-align:center; margin-bottom:30px;"><h1 style="margin:0;">${db.config.name}</h1><h2 style="margin:5px 0; color:#555;">${titulo}</h2><p>Fecha de emisión: ${new Date().toLocaleDateString()}</p></div><table style="width:100%; border-collapse: collapse; font-size:14px;"><thead style="background-color:#f4f4f4;"><tr><th style="padding:10px; border:1px solid #ddd; text-align:left;">N° Comp.</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Fecha</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">${nombreColumna}</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Producto(s)</th><th style="padding:10px; border:1px solid #ddd;">Items</th><th style="padding:10px; border:1px solid #ddd; text-align:right;">Total</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Tipo de Pago</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="margin-top:20px; text-align:right;"><h2>Total General: Bs.${totalGeneral.toFixed(2)}</h2></div>
                 `;
-                document.body.classList.add('printing-carta');
-                window.print();
-                setTimeout(() => document.body.classList.remove('printing-carta'), 500);
+                document.body.classList.add('printing-carta'); window.print(); setTimeout(() => document.body.classList.remove('printing-carta'), 500);
             }
         }
 
@@ -826,7 +812,22 @@
         function printComprobanteUnico(tipo, id) {
             const reg = db[tipo].find(i => i.id === id); if(!reg) return;
             const esSalida = tipo === 'salidas'; const area = document.getElementById('ticket-print-area');
-            let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:10px; font-weight:bold;">${esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA'}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>Producto:</strong><br>${getProdName(reg.prodId)}</p><p style="margin:3px 0; font-size:12px;"><strong>Cantidad:</strong> ${reg.cant} ${getProdUnit(reg.prodId)}</p><p style="margin:3px 0; font-size:12px;"><strong>Precio Unit.:</strong> Bs.${reg.precio.toFixed(2)}</p><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
+            
+            const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
+            let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Cant | Producto</span><span>Subtotal</span></div><hr style="border-top:1px dashed black; margin:5px 0;">`;
+            
+            // Loop para múltiples productos
+            if (reg.detalles) {
+                reg.detalles.forEach(d => {
+                    html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant}x ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
+                });
+            } else {
+                // Soporte para datos viejos
+                html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant}x ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`;
+            }
+
+            html += `<hr style="border-top:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
+            
             area.innerHTML = html; document.body.classList.add('printing-ticket80'); window.print(); setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
         }
     </script>
