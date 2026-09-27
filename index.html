@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Empresarial en la Nube</title>
     
-    <!-- LIBRERÍAS DE FIREBASE -->
+    <!-- LIBRERÍAS DE FIREBASE Y GENERADOR PDF -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         /* PALETA DE COLORES EMPRESARIAL */
@@ -108,6 +109,7 @@
         .btn-carta { background-color: var(--info); }
         .btn-ticket { background-color: var(--dark); }
         .btn-excel { background-color: var(--success); }
+        .btn-pdf { background-color: #c0392b; }
 
         /* CATÁLOGOS */
         .catalogos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
@@ -350,9 +352,11 @@
             <hr style="margin: 30px 0; border:1px solid #eee;">
             <h3 style="color: var(--primary);">🟢 Detalle de Ventas (Salidas)</h3>
             <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                <button class="btn-print-action btn-carta" onclick="imprimirSeccion('ventas', 'carta')">📄 Imprimir (Carta / PDF)</button>
-                <button class="btn-print-action btn-ticket" onclick="imprimirSeccion('ventas', 'ticket80')">🧾 Imprimir (Ticket)</button>
+                <button class="btn-print-action btn-carta" onclick="imprimirSeccion('ventas', 'carta')">🖨️ Imprimir Pantalla (Carta)</button>
+                <button class="btn-print-action btn-ticket" onclick="imprimirSeccion('ventas', 'ticket80')">🧾 Imprimir Ticket</button>
                 <button class="btn-print-action btn-excel" onclick="exportarExcel('ventas')">📊 Exportar Excel</button>
+                <button class="btn-print-action btn-pdf" onclick="descargarPDF('ventas', 'carta')">⬇️ Descargar PDF (Carta)</button>
+                <button class="btn-print-action btn-pdf" onclick="descargarPDF('ventas', 'ticket80')">⬇️ Descargar PDF (Ticket)</button>
             </div>
             <div class="table-responsive">
                 <table>
@@ -365,9 +369,11 @@
             <hr style="margin: 30px 0; border:1px solid #eee;">
             <h3 style="color: var(--success);">🔴 Detalle de Compras (Ingresos)</h3>
             <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                <button class="btn-print-action btn-carta" onclick="imprimirSeccion('compras', 'carta')">📄 Imprimir (Carta / PDF)</button>
-                <button class="btn-print-action btn-ticket" onclick="imprimirSeccion('compras', 'ticket80')">🧾 Imprimir (Ticket)</button>
+                <button class="btn-print-action btn-carta" onclick="imprimirSeccion('compras', 'carta')">🖨️ Imprimir Pantalla (Carta)</button>
+                <button class="btn-print-action btn-ticket" onclick="imprimirSeccion('compras', 'ticket80')">🧾 Imprimir Ticket</button>
                 <button class="btn-print-action btn-excel" onclick="exportarExcel('compras')">📊 Exportar Excel</button>
+                <button class="btn-print-action btn-pdf" onclick="descargarPDF('compras', 'carta')">⬇️ Descargar PDF (Carta)</button>
+                <button class="btn-print-action btn-pdf" onclick="descargarPDF('compras', 'ticket80')">⬇️ Descargar PDF (Ticket)</button>
             </div>
             <div class="table-responsive">
                 <table>
@@ -433,7 +439,6 @@
         <div class="modal-content">
             <h3 id="modal-title" style="text-align:center; margin-top:0; color:var(--dark);">👀 Vista Preliminar</h3>
             <div id="preview-content" class="preview-ticket"></div>
-            <!-- Los botones se inyectan dinámicamente aquí -->
             <div class="modal-actions" id="modal-actions-dynamic"></div>
         </div>
     </div>
@@ -460,17 +465,14 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // BASE DE DATOS LOCAL
         let db = { config: { name: 'MI EMPRESA', logo: '' }, usuarios: [{ id: '1', user: 'admin', pass: '1234' }], productos: [], clientes: [], proveedores: [], ingresos: [], salidas: [] };
         
         let reportDataVentas = []; let reportDataCompras = []; 
         let pendingTransaccion = null; 
         
-        // Carritos multiproducto
         let cartSalida = [];
         let cartIngreso = [];
 
-        // ASIGNACIÓN AUTOMÁTICA DE FECHA ACTUAL
         function setDefaultDates() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -482,11 +484,10 @@
             document.getElementById('filtro-desde').value = fechaActual;
             document.getElementById('filtro-hasta').value = fechaActual;
         }
-
         setDefaultDates();
 
         // ==========================================
-        // LOGIN
+        // LOGIN Y NUBE
         // ==========================================
         function verificarLogin() {
             const u = document.getElementById('login-user').value.trim();
@@ -498,9 +499,6 @@
             else { document.getElementById('login-error').style.display = 'block'; }
         }
 
-        // ==========================================
-        // CONEXIÓN EN TIEMPO REAL
-        // ==========================================
         database.ref('sistema_inventario').on('value', (snapshot) => {
             const data = snapshot.val();
             if(data) {
@@ -611,7 +609,6 @@
         // ==========================================
         // PROCESAR TRANSACCIONES Y VISTA PREVIA
         // ==========================================
-        
         function generarHTMLVoucher(esSalida, obj) {
             const titulo = esSalida ? 'COMPROBANTE DE VENTA' : 'COMPROBANTE DE COMPRA';
             const nombreColumna = esSalida ? 'Cliente' : 'Proveedor';
@@ -627,7 +624,7 @@
                     totalItems++;
                     totalCantidades += d.cant;
                 });
-            } else { // Compatibilidad hacia atrás
+            } else { 
                 rowsHtml += `<p style="margin:3px 0; font-size:12px; display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:3px;"><span>${obj.cant} ${getProdUnit(obj.prodId)} ${getProdName(obj.prodId)}</span><span>Bs.${obj.total.toFixed(2)}</span></p>`;
                 totalItems = 1;
                 totalCantidades = obj.cant;
@@ -673,17 +670,11 @@
                 pago: document.getElementById(`${prefix}-pago`).value, 
             };
 
-            if(esSalida) { 
-                obj.cliId = document.getElementById('salida-cliente').value; 
-                obj.motivo = document.getElementById('salida-motivo').value; 
-            } else { 
-                obj.provId = document.getElementById('ingreso-proveedor').value; 
-                obj.obs = document.getElementById('ingreso-obs').value.trim(); 
-            }
+            if(esSalida) { obj.cliId = document.getElementById('salida-cliente').value; obj.motivo = document.getElementById('salida-motivo').value; } 
+            else { obj.provId = document.getElementById('ingreso-proveedor').value; obj.obs = document.getElementById('ingreso-obs').value.trim(); }
 
             pendingTransaccion = { tipo, data: obj };
 
-            // Inyectar Botones para "Confirmar Guardado"
             document.getElementById('modal-actions-dynamic').innerHTML = `
                 <button class="btn-confirmar" onclick="confirmarTransaccion()">✅ ACEPTAR E IMPRIMIR</button>
                 <button class="btn-cancelar" onclick="cerrarPreview()">❌ CANCELAR</button>
@@ -693,19 +684,15 @@
             document.getElementById('modal-preview').style.display = 'flex';
         }
 
-        // VISTA PREVIA DESDE HISTORIAL/REPORTES (SIN GUARDAR, SOLO VER/IMPRIMIR)
         function previewComprobante(tipo, id) {
-            const reg = db[tipo].find(i => i.id === id); 
-            if(!reg) return;
+            const reg = db[tipo].find(i => i.id === id); if(!reg) return;
             const esSalida = tipo === 'salidas';
             
-            // Inyectar Botones para "Solo Lectura / Imprimir"
             document.getElementById('modal-actions-dynamic').innerHTML = `
                 <button class="btn-print-action btn-ticket" onclick="printComprobanteUnico('${tipo}', '${id}', 'ticket80')" style="margin:0; justify-content:center;">🧾 Imprimir Ticket</button>
                 <button class="btn-print-action btn-carta" onclick="printComprobanteUnico('${tipo}', '${id}', 'carta')" style="margin:0; justify-content:center;">📄 Imprimir Carta</button>
                 <button class="btn-cancelar" onclick="document.getElementById('modal-preview').style.display='none'" style="margin:0;">❌ Cerrar</button>
             `;
-
             document.getElementById('preview-content').innerHTML = generarHTMLVoucher(esSalida, reg);
             document.getElementById('modal-preview').style.display = 'flex';
         }
@@ -742,14 +729,11 @@
             document.getElementById(`${prefix}-id`).value = item.id; 
             document.getElementById(`${prefix}-fecha`).value = item.fecha; 
             document.getElementById(`${prefix}-pago`).value = item.pago;
-            if(esSalida) { document.getElementById('salida-cliente').value = item.cliId; document.getElementById('salida-motivo').value = item.motivo; } else { document.getElementById('ingreso-proveedor').value = item.provId; document.getElementById('ingreso-obs').value = item.obs; }
+            if(esSalida) { document.getElementById('salida-cliente').value = item.cliId; document.getElementById('salida-motivo').value = item.motivo; } 
+            else { document.getElementById('ingreso-proveedor').value = item.provId; document.getElementById('ingreso-obs').value = item.obs; }
             
-            if(item.detalles) {
-                if(esSalida) cartSalida = [...item.detalles]; else cartIngreso = [...item.detalles];
-            } else {
-                const prodLegacy = { prodId: item.prodId, prodName: getProdName(item.prodId), prodUnit: getProdUnit(item.prodId), cant: item.cant, precio: item.precio, subtotal: item.total };
-                if(esSalida) cartSalida = [prodLegacy]; else cartIngreso = [prodLegacy];
-            }
+            if(item.detalles) { if(esSalida) cartSalida = [...item.detalles]; else cartIngreso = [...item.detalles]; } 
+            else { const prodLegacy = { prodId: item.prodId, prodName: getProdName(item.prodId), prodUnit: getProdUnit(item.prodId), cant: item.cant, precio: item.precio, subtotal: item.total }; if(esSalida) cartSalida = [prodLegacy]; else cartIngreso = [prodLegacy]; }
             renderCarrito(prefix);
 
             const btn = document.getElementById(`btn-${prefix}`); btn.innerText = "✏️ ACTUALIZAR REGISTRO"; btn.classList.add('edit-mode'); btn.nextElementSibling.style.display = "block"; window.scrollTo(0,0);
@@ -758,10 +742,7 @@
         function deleteReg(type, id) { if(confirm("⚠️ ¿Seguro que deseas eliminar este registro?")) { db[type] = db[type].filter(i => i.id !== id); guardarEnNube(); showToast("🗑️ Eliminado"); } }
 
         function formatNombresProductos(item) {
-            if(item.detalles) {
-                if(item.detalles.length === 1) return item.detalles[0].prodName;
-                return `Varios (${item.detalles.length} items)`;
-            }
+            if(item.detalles) { if(item.detalles.length === 1) return item.detalles[0].prodName; return `Varios (${item.detalles.length} items)`; }
             return getProdName(item.prodId);
         }
 
@@ -815,25 +796,19 @@
             
             reportDataVentas.sort((a,b) => a.fecha.localeCompare(b.fecha)); reportDataCompras.sort((a,b) => a.fecha.localeCompare(b.fecha));
 
-            // CALCULAR DESGLOSE DE CONTADO Y CRÉDITO
             const ventasContado = arrVentas.filter(v => v.pago === 'Contado').reduce((sum, item) => sum + item.total, 0);
             const ventasCredito = arrVentas.filter(v => v.pago === 'Crédito').reduce((sum, item) => sum + item.total, 0);
-            
             const comprasContado = arrCompras.filter(c => c.pago === 'Contado').reduce((sum, item) => sum + item.total, 0);
             const comprasCredito = arrCompras.filter(c => c.pago === 'Crédito').reduce((sum, item) => sum + item.total, 0);
 
-            // ACTUALIZAR EL DASHBOARD EN LA UI
             document.getElementById('rep-ventas').textContent = 'Bs.' + ventasContado.toFixed(2); 
             document.getElementById('rep-cobrar').textContent = 'Bs.' + ventasCredito.toFixed(2); 
             document.getElementById('rep-compras').textContent = 'Bs.' + comprasContado.toFixed(2); 
             document.getElementById('rep-pagar').textContent = 'Bs.' + comprasCredito.toFixed(2); 
 
-            // RENDERIZAR TABLAS CON BOTONES DE ACCIÓN AÑADIDOS
             document.getElementById('table-reporte-ventas').innerHTML = reportDataVentas.map(d => `<tr><td>N° ${d.num.toString().padStart(4,'0')}</td><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-view" title="Ver Voucher" onclick="previewComprobante('salidas', '${d.raw.id}')">👀</button><button class="btn-action-sm btn-edit" title="Editar" onclick="showPanel('panel-salidas'); editarTrans('salidas', '${d.raw.id}')">✏️</button><button class="btn-action-sm btn-delete" title="Eliminar" onclick="deleteReg('salidas', '${d.raw.id}')">🗑️</button></td></tr>`).join('');
-            
             document.getElementById('table-reporte-compras').innerHTML = reportDataCompras.map(d => `<tr><td>N° ${d.num.toString().padStart(4,'0')}</td><td>${d.fecha}</td><td>${d.entidad}</td><td>${d.prod}</td><td style="font-weight:bold;">Bs.${d.total.toFixed(2)}</td><td><span class="badge ${d.pago==='Contado'?'badge-contado':'badge-credito'}">${d.pago}</span></td><td class="acciones-td"><button class="btn-action-sm btn-view" title="Ver Voucher" onclick="previewComprobante('ingresos', '${d.raw.id}')">👀</button><button class="btn-action-sm btn-edit" title="Editar" onclick="showPanel('panel-ingresos'); editarTrans('ingresos', '${d.raw.id}')">✏️</button><button class="btn-action-sm btn-delete" title="Eliminar" onclick="deleteReg('ingresos', '${d.raw.id}')">🗑️</button></td></tr>`).join('');
 
-            // STOCK
             const stockMap = {}; (db.productos||[]).forEach(p => stockMap[p.id] = { nom: p.nombre, uni: p.unidad, in:0, out:0 });
             (db.ingresos||[]).forEach(i => { if(i.detalles) { i.detalles.forEach(d => { if(stockMap[d.prodId]) stockMap[d.prodId].in += d.cant; }); } else { if(stockMap[i.prodId]) stockMap[i.prodId].in += i.cant; }});
             (db.salidas||[]).forEach(s => { if(s.detalles) { s.detalles.forEach(d => { if(stockMap[d.prodId]) stockMap[d.prodId].out += d.cant; }); } else { if(stockMap[s.prodId]) stockMap[s.prodId].out += s.cant; }});
@@ -845,75 +820,115 @@
         }
 
         // ==========================================
-        // EXPORTACIÓN A EXCEL (CSV)
+        // EXPORTACIÓN A EXCEL (CSV) MEJORADA
         // ==========================================
         function exportarExcel(tipo) {
             const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
             if (dataToPrint.length === 0) return alert("⚠️ No hay datos para exportar en esta sección con los filtros actuales.");
             
             const tituloEntidad = tipo === 'ventas' ? 'Cliente' : 'Proveedor';
-            // Agregamos BOM (\uFEFF) para que Excel reconozca bien los acentos (UTF-8)
+            // Agregamos BOM (\uFEFF) para que Excel reconozca bien los acentos
             let csvContent = `\uFEFFN°,Fecha,${tituloEntidad},Productos,Cant.,Total (Bs.),Pago\n`;
             
+            let totalContado = 0;
+            let totalCredito = 0;
+            let totalGeneral = 0;
+
             dataToPrint.forEach(d => {
-                // Limpiamos las comas de los nombres para que no rompan las columnas del CSV
                 const prodLimpio = d.prod.replace(/,/g, ' -');
                 const entidadLimpia = d.entidad.replace(/,/g, '');
                 csvContent += `${d.num},${d.fecha},${entidadLimpia},${prodLimpio},${d.cant},${d.total.toFixed(2)},${d.pago}\n`;
+                
+                if(d.pago === 'Contado') totalContado += d.total;
+                else if(d.pago === 'Crédito') totalCredito += d.total;
+                totalGeneral += d.total;
             });
 
-            // Blob para crear el archivo descargable
+            // AGREGAR TOTALES AL FINAL DEL ARCHIVO EXCEL
+            csvContent += `\n,,,,,,`;
+            csvContent += `\n,,,,TOTAL CONTADO EFECTIVO:,${totalContado.toFixed(2)},`;
+            csvContent += `\n,,,,TOTAL A CREDITO (Por Cobrar/Pagar):,${totalCredito.toFixed(2)},`;
+            csvContent += `\n,,,,TOTAL GENERAL REGISTRADO:,${totalGeneral.toFixed(2)},`;
+
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             
             link.setAttribute("href", url);
             link.setAttribute("download", `Reporte_${tipo.toUpperCase()}_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         // ==========================================
-        // IMPRESIÓN DINÁMICA MULTIFORMATO
+        // FUNCIONES DE HTML COMPARTIDO PARA IMPRIMIR/PDF
         // ==========================================
-        function imprimirSeccion(tipo, formato) {
+        function generarHTMLReporte(tipo, formato) {
             const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
-            if (dataToPrint.length === 0) return alert("⚠️ No hay datos para imprimir en esta sección.");
-            
             const fEntidad = document.getElementById('filtro-entidad');
             let tituloExt = fEntidad.value !== 'Todos' ? ` - ${fEntidad.options[fEntidad.selectedIndex].text}` : '';
-            
             const titulo = (tipo === 'ventas' ? 'REPORTE DE VENTAS' : 'REPORTE DE COMPRAS') + tituloExt.toUpperCase();
             const nombreColumna = tipo === 'ventas' ? 'Cliente' : 'Proveedor';
             const totalGeneral = dataToPrint.reduce((sum, item) => sum + item.total, 0);
 
             if (formato === 'ticket80') {
-                const area = document.getElementById('ticket-print-area');
                 let rowsHtml = dataToPrint.map(d => `<div style="display:flex; justify-content:space-between; margin-bottom:3px; font-size:11px;"><span>#${d.num.toString().padStart(3,'0')} | ${d.fecha.substring(5)} | ${d.prod.substring(0,8)}</span><span>Bs.${d.total.toFixed(2)}</span></div>`).join('');
-                
-                area.innerHTML = `
-                    <div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>N° | Fecha | Producto</span><span>Total</span></div><hr style="border-top:1px dashed black; margin:5px 0;">${rowsHtml}<hr style="border-top:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>
-                `;
-                document.body.classList.add('printing-ticket80'); window.print(); setTimeout(() => document.body.classList.remove('printing-ticket80'), 500);
-            } 
-            else if (formato === 'carta') {
-                const area = document.getElementById('carta-print-area');
+                return `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>N° | Fecha | Producto</span><span>Total</span></div><hr style="border-top:1px dashed black; margin:5px 0;">${rowsHtml}<hr style="border-top:1px dashed black; margin:5px 0;"><h4 style="margin:5px 0; text-align:right;">TOTAL GENERAL: Bs.${totalGeneral.toFixed(2)}</h4>`;
+            } else {
                 let rowsHtml = dataToPrint.map(d => `<tr><td style="padding:10px; border:1px solid #ddd;">N° ${d.num.toString().padStart(4,'0')}</td><td style="padding:10px; border:1px solid #ddd;">${d.fecha}</td><td style="padding:10px; border:1px solid #ddd;">${d.entidad}</td><td style="padding:10px; border:1px solid #ddd;">${d.prod}</td><td style="padding:10px; border:1px solid #ddd; text-align:center;">${d.cant}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.total.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${d.pago}</td></tr>`).join('');
-                
-                area.innerHTML = `
-                    <div style="text-align:center; margin-bottom:30px;"><h1 style="margin:0;">${db.config.name}</h1><h2 style="margin:5px 0; color:#555;">${titulo}</h2><p>Fecha de emisión: ${new Date().toLocaleDateString()}</p></div><table style="width:100%; border-collapse: collapse; font-size:14px;"><thead style="background-color:#f4f4f4;"><tr><th style="padding:10px; border:1px solid #ddd; text-align:left;">N° Comp.</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Fecha</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">${nombreColumna}</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Producto(s)</th><th style="padding:10px; border:1px solid #ddd;">Items</th><th style="padding:10px; border:1px solid #ddd; text-align:right;">Total</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Tipo de Pago</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="margin-top:20px; text-align:right;"><h2>Total General: Bs.${totalGeneral.toFixed(2)}</h2></div>
-                `;
-                document.body.classList.add('printing-carta'); window.print(); setTimeout(() => document.body.classList.remove('printing-carta'), 500);
+                return `<div style="text-align:center; margin-bottom:30px;"><h1 style="margin:0;">${db.config.name}</h1><h2 style="margin:5px 0; color:#555;">${titulo}</h2><p>Fecha de emisión: ${new Date().toLocaleDateString()}</p></div><table style="width:100%; border-collapse: collapse; font-size:14px;"><thead style="background-color:#f4f4f4;"><tr><th style="padding:10px; border:1px solid #ddd; text-align:left;">N° Comp.</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Fecha</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">${nombreColumna}</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Producto(s)</th><th style="padding:10px; border:1px solid #ddd;">Items</th><th style="padding:10px; border:1px solid #ddd; text-align:right;">Total</th><th style="padding:10px; border:1px solid #ddd; text-align:left;">Tipo de Pago</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="margin-top:20px; text-align:right;"><h2>Total General: Bs.${totalGeneral.toFixed(2)}</h2></div>`;
             }
         }
 
-        // Impresión de comprobante individual desde el historial o al aceptar la venta
+        function imprimirSeccion(tipo, formato) {
+            const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
+            if (dataToPrint.length === 0) return alert("⚠️ No hay datos para imprimir en esta sección.");
+            
+            const area = document.getElementById(formato === 'ticket80' ? 'ticket-print-area' : 'carta-print-area');
+            area.innerHTML = generarHTMLReporte(tipo, formato);
+            
+            document.body.classList.add(`printing-${formato}`); 
+            window.print(); 
+            setTimeout(() => document.body.classList.remove(`printing-${formato}`), 500);
+        }
+
+        // ==========================================
+        // GENERACIÓN Y DESCARGA DE PDF DIRECTA
+        // ==========================================
+        function descargarPDF(tipo, formato) {
+            const dataToPrint = tipo === 'ventas' ? reportDataVentas : reportDataCompras;
+            if (dataToPrint.length === 0) return alert("⚠️ No hay datos para convertir a PDF.");
+
+            const htmlContent = generarHTMLReporte(tipo, formato);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+
+            // Asegurar estilos para el PDF
+            tempDiv.style.color = 'black';
+            tempDiv.style.background = 'white';
+            tempDiv.style.padding = formato === 'ticket80' ? '5mm' : '15mm';
+            tempDiv.style.fontFamily = formato === 'ticket80' ? 'monospace' : 'sans-serif';
+            
+            // Configurar tamaño
+            const opt = {
+                margin:       formato === 'ticket80' ? 2 : 10,
+                filename:     `Reporte_${tipo.toUpperCase()}_${formato}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: formato === 'ticket80' ? [76, 297] : 'letter', orientation: 'portrait' }
+            };
+
+            // Iniciar la descarga usando la librería
+            showToast("⏳ Generando PDF, por favor espera...");
+            html2pdf().set(opt).from(tempDiv).save().then(() => {
+                showToast("✅ PDF descargado exitosamente");
+            });
+        }
+
+        // Impresión de comprobante individual (Ojo: Este también se podría pasar a PDF si lo deseas en un futuro)
         function printComprobanteUnico(tipo, id, formato = 'ticket80') {
             const reg = db[tipo].find(i => i.id === id); if(!reg) return;
             const esSalida = tipo === 'salidas'; 
             
-            // Cerrar el modal por si se imprimió desde el botón del modal
             document.getElementById('modal-preview').style.display = 'none';
             
             if(formato === 'ticket80') {
@@ -922,16 +937,8 @@
                 let html = `<div style="text-align:center; margin-bottom:10px;"><h3 style="margin:0; font-size:16px;">${db.config.name}</h3><p style="margin:0; font-size:12px; font-weight:bold;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</p><p style="margin:0; font-size:10px;">Fecha: ${reg.fecha}</p></div><hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:12px;"><strong>${esSalida ? 'Cliente' : 'Proveedor'}:</strong><br>${esSalida ? getCliName(reg.cliId) : getProvName(reg.provId)}</p><hr style="border-top:1px dashed black; margin:5px 0;"><div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;"><span>Cant | Producto</span><span>Subtotal</span></div><hr style="border-top:1px dashed black; margin:5px 0;">`;
                 
                 let totalItems = 0; let totalCant = 0;
-
-                if (reg.detalles) {
-                    reg.detalles.forEach(d => {
-                        html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant} ${d.prodUnit} ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`;
-                        totalItems++; totalCant += d.cant;
-                    });
-                } else {
-                    html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant} ${getProdUnit(reg.prodId)} ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`;
-                    totalItems = 1; totalCant = reg.cant;
-                }
+                if (reg.detalles) { reg.detalles.forEach(d => { html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${d.cant} ${d.prodUnit} ${d.prodName.substring(0,14)}</span><span>Bs.${d.subtotal.toFixed(2)}</span></p>`; totalItems++; totalCant += d.cant; }); } 
+                else { html += `<p style="margin:3px 0; font-size:11px; display:flex; justify-content:space-between;"><span>${reg.cant} ${getProdUnit(reg.prodId)} ${getProdName(reg.prodId).substring(0,14)}</span><span>Bs.${reg.total.toFixed(2)}</span></p>`; totalItems = 1; totalCant = reg.cant; }
 
                 html += `<hr style="border-top:1px dashed black; margin:5px 0;"><p style="margin:3px 0; font-size:11px; text-align:left;"><strong>Total de items:</strong> ${totalItems} (Cant: ${totalCant})</p><h4 style="margin:5px 0; text-align:right;">Total: Bs.${reg.total.toFixed(2)}</h4><p style="margin:3px 0; font-size:11px;"><strong>Pago:</strong> ${reg.pago}</p><br><br><p style="text-align:center; font-size:10px;">.........................<br>Firma Autorizada</p>`;
                 
@@ -944,13 +951,8 @@
                 const nombreEntidad = esSalida ? getCliName(reg.cliId) : getProvName(reg.provId);
                 
                 let rowsHtml = '';
-                if(reg.detalles) {
-                    reg.detalles.forEach(d => {
-                        rowsHtml += `<tr><td style="padding:10px; border:1px solid #ddd;">${d.cant} ${d.prodUnit}</td><td style="padding:10px; border:1px solid #ddd;">${d.prodName}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.precio.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.subtotal.toFixed(2)}</td></tr>`;
-                    });
-                } else {
-                    rowsHtml += `<tr><td style="padding:10px; border:1px solid #ddd;">${reg.cant} ${getProdUnit(reg.prodId)}</td><td style="padding:10px; border:1px solid #ddd;">${getProdName(reg.prodId)}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${reg.precio.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${reg.total.toFixed(2)}</td></tr>`;
-                }
+                if(reg.detalles) { reg.detalles.forEach(d => { rowsHtml += `<tr><td style="padding:10px; border:1px solid #ddd;">${d.cant} ${d.prodUnit}</td><td style="padding:10px; border:1px solid #ddd;">${d.prodName}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.precio.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${d.subtotal.toFixed(2)}</td></tr>`; }); } 
+                else { rowsHtml += `<tr><td style="padding:10px; border:1px solid #ddd;">${reg.cant} ${getProdUnit(reg.prodId)}</td><td style="padding:10px; border:1px solid #ddd;">${getProdName(reg.prodId)}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${reg.precio.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">Bs.${reg.total.toFixed(2)}</td></tr>`; }
 
                 area.innerHTML = `
                     <div style="text-align:center; margin-bottom:30px;"><h1 style="margin:0;">${db.config.name}</h1><h2 style="margin:5px 0; color:#555;">${titulo} N° ${(reg.num||0).toString().padStart(4, '0')}</h2></div>
